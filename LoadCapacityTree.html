@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv = "X-UA-Compatible" content = "IE = edge" charset = "UTF-8"/> 
+		<title>TEST</title>
+		<!-- <link rel = "stylesheet" href = "../src/main/webapp/pages/css/wanma.css"/> -->
+		<link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/default/easyui.css"/>
+		<!-- <link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/icon.css"/> -->
+		
+		<script type = "text/javascript" src = "../src/main/webapp/tools/tssJS/tssJS.all.js"></script>
+		
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.min.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.easyui.min.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/easyui-lang-zh_CN.js"></script>
+		
+		<script type = "text/javascript" src = "../src/main/webapp/tools/echarts/echarts-3.1.5.js"></script>
+		<!-- <script type = "text/javascript" src = "../src/main/webapp/more/bi_template/echart.js"></script> -->
+		<!-- <script type = "text/javascript" src = "../src/main/webapp/more/bi_template/common.js"></script> -->
+		<!-- <script type = "text/javascript" src = "../src/main/webapp/pages/js/common.js"></script> -->
+		<script type = "text/javascript">
+			var data1, data2, data3
+			// data1 按区域选项中的区域外数据， data2 按区域选项中的区域内数据， data3 按分拨选择
+			var URL1 = "http://10.45.10.216:8080/tss/data/json/2168";
+			var	URL2 = "http://10.45.10.216:8080/tss/data/json/2150";
+			
+			
+			var method = "POST";
+			//var params = {"param1": "-1"};
+			
+			$(function(){
+			
+				tssJS.ajax({
+				url: URL1,
+				params: {"param1": "-1"},
+				method: method,
+				waiting: true,
+				ondata: function(){
+					data1 =  this.getResponseJSON();
+					//console.log(data1);
+					}
+				});	
+				
+				tssJS.ajax({
+				url: URL2,
+				params: {"param1": "按区域", "param2": "-1"},
+				method: method,
+				waiting: true,
+				ondata: function(){
+					data2 =  this.getResponseJSON();
+					//console.log(data);
+					to_region(data1, data2);
+					}
+				});	
+				
+				
+				
+				tssJS.ajax({
+				url: URL2,
+				params: {"param1": "按分拨", "param2": "-1"},
+				method: method,
+				waiting: true,
+				ondata: function(){
+					data3 =  this.getResponseJSON();
+					//console.log(data2);
+					}
+				});	
+				
+			});
+			
+			function to_region(data1, data2){
+				var reglist = [];
+				
+				$.each(data2, function(i, item){
+					var reg = item.reg;
+					if(!reglist.contains(reg)){
+						reglist.push(reg);
+					}
+				});
+				
+				for(var i=0; i<reglist.length; i++){
+					var to_reglist = [],typelist = [], row = [{}];
+					for(var j=0; j<data1.length; j++){
+						var in_reg = data1[j]["in_reg"];
+						if(reglist[i] === in_reg) {
+							var to_reg = data1[j]["to_reg"];
+							var type = data1[j]["type"];
+							if(!to_reglist.contains(to_reg)){
+								to_reglist.push(to_reg);
+								row["route"] = in_reg + "→" + to_reg;
+								if(!typelist.contains(type)){
+									typelist.push(type);
+									row["route"]["type"]["capacity"] += data1[j]["numb"]
+									row["route"]["type"]["line"] += data1[j]["cnt"]
+								}
+								;
+								//row["capacity"]
+							}
+							
+						}
+					}
+				}				
+			}
+		</script>
+	</head>
+	<body>
+		<div>
+			<table id = "tree" style = "width:100%; height:100%">
+				<thead>
+					<tr>
+						<th data-options = "field: 'name'" width = "40%">名称</th>
+						<th data-options = "field: 'line'" width = "30%">车线</th>
+						<th data-options = "field: 'capacity'" width = "30%">运力</th>
+					</tr>
+				</thead>
+			</table>
+		</div>
+	</body>
+</html>
