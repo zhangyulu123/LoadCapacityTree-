@@ -57,7 +57,7 @@
 					if(regobj[reg] == null){
 						regobj[reg] = j;
 						//console.log(regobj);
-						rows.push({"id":j, "_parentId":null, "name":reg, "capacity": item.c_in1+item.c_out, "line": item.l_in1+item.l_out1});
+						rows.push({"id":j, "_parentId":null, "name":reg, "capacity": item.c_in1+item.c_out, "line": item.l_in1+item.l_out1,"state":"closed"});
 						j++;
 					};	
 				});
@@ -78,8 +78,8 @@
 					var pid = regobj[reg];
 					if(!templist.contains(reg)){
 						templist.push(reg);
-						rows.push({"id":pid*10+1, "_parentId": pid, "name":"区域内", "capacity": item.c_in1, "line": item.l_in1});
-						rows.push({"id":pid*10+2, "_parentId": pid, "name":"区域外", "capacity": item.c_out1, "line": item.l_out1})
+						rows.push({"id":pid*10+1, "_parentId": pid, "name":"区域内", "capacity": item.c_in1, "line": item.l_in1,"state":"closed"});
+						rows.push({"id":pid*10+2, "_parentId": pid, "name":"区域外", "capacity": item.c_out1, "line": item.l_out1,"state":"closed"})
 					}
 				});
 				
@@ -90,20 +90,20 @@
 					var pid = regobj[item.in_reg];
 					if((!templist.contains(type))&&(item.c_in != 0) &&(item.l_in != 0) ){
 						templist.push(type);
-						rows.push({"id":pid*100+10+typeobj[item.type], "_parentId": pid*10+1, "name":item.type, "capacity":item.c_in, "line":item.l_in})
+						rows.push({"id":pid*100+10+typeobj[item.type], "_parentId": pid*10+1, "name":item.type, "capacity":item.c_in, "line":item.l_in,"state":"closed"})
 					}
 				});
 				
 				//第三层区域外
-				var j = 1; var templist = []; var route = {};
+				var j = 1; var templist = []; //var route = {};
 				$.each(data1, function(i, item){
 					var in_to = item.in_reg + "→" + item.to_reg;
 					var pid = regobj[item.in_reg];
 					if(!templist.contains(in_to)){
 						templist.push(in_to);
-						rows.push({"id":pid*100+20+j, "_parentId": pid*10+2, "name":in_to, "capacity":item.c_out2, "line":item.l_out2})
+						rows.push({"id":pid*1000+200+pid*10+regobj[item.to_reg], "_parentId": pid*10+2, "name":in_to, "capacity":item.c_out2, "line":item.l_out2,"state":"closed"})
 					}
-					route[in_to] = pid*100+20+j;
+					//route[in_to] = pid*100+20+j;
 				});
 				
 				//第四层区域外
@@ -111,10 +111,10 @@
 				$.each(data1, function(i, item){
 					var in_to = item.in_reg + "→" + item.to_reg;
 					var type = in_to + item.type;
-					var pid = route[in_to];
+					var pid = regobj[item.in_reg];
 					if(!templist.contains(type)){
 						templist.push(type);
-						rows.push({"id":pid*10+j, "_parentId": pid, "name":item.type, "capacity":item.c_out, "line":item.l_out})
+						rows.push({"id":pid*10000+2000+pid*100+regobj[item.to_reg]*10+typeobj[item.type], "_parentId": pid*1000+200+pid*10+regobj[item.to_reg], "name":item.type, "capacity":item.c_out, "line":item.l_out,"state":"closed"})
 					}
 				});
 				
