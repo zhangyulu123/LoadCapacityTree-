@@ -18,14 +18,16 @@
 		<!-- <script type = "text/javascript" src = "../src/main/webapp/more/bi_template/common.js"></script> -->
 		<!-- <script type = "text/javascript" src = "../src/main/webapp/pages/js/common.js"></script> -->
 		<script type = "text/javascript">
-			var data1, data2, data3
+			var data1; //, data2, data3
 			// data1 按区域选项中的区域外数据， data2 按区域选项中的区域内数据， data3 按分拨选择
 			var URL1 = "http://10.45.10.216:8080/tss/data/json/2168";
-			var	URL2 = "http://10.45.10.216:8080/tss/data/json/2150";
+			//var	URL2 = "http://10.45.10.216:8080/tss/data/json/2150";
 			
 			
 			var method = "POST";
 			//var params = {"param1": "-1"};
+			
+
 			
 			$(function(){
 			
@@ -36,70 +38,104 @@
 				waiting: true,
 				ondata: function(){
 					data1 =  this.getResponseJSON();
-					//console.log(data1);
+					tree(data1)
 					}
 				});	
 				
-				tssJS.ajax({
-				url: URL2,
-				params: {"param1": "按区域", "param2": "-1"},
-				method: method,
-				waiting: true,
-				ondata: function(){
-					data2 =  this.getResponseJSON();
-					//console.log(data);
-					to_region(data1, data2);
-					}
-				});	
-				
-				
-				
-				tssJS.ajax({
-				url: URL2,
-				params: {"param1": "按分拨", "param2": "-1"},
-				method: method,
-				waiting: true,
-				ondata: function(){
-					data3 =  this.getResponseJSON();
-					//console.log(data2);
-					}
-				});	
 				
 			});
-			
-			function to_region(data1, data2){
-				var reglist = [];
 				
-				$.each(data2, function(i, item){
-					var reg = item.reg;
-					if(!reglist.contains(reg)){
-						reglist.push(reg);
+			function tree(data1){
+				var regobj = new Object(), typeobj = new Object();
+				var rows = [];
+				var json = {"rows":[], "footer":[]};
+				var j = 1;
+				
+				//区域编号
+				$.each(data1, function(i, item){
+					var reg = item.in_reg; 
+					if(regobj[reg] == null){
+						regobj[reg] = j;
+						//console.log(regobj);
+						rows.push({"id":j, "_parentId":null, "name":reg, "capacity": item.c_in1+item.c_out, "line": item.l_in1+item.l_out1});
+						j++;
+					};	
+				});
+				//车型编号
+				var j = 1
+				$.each(data1, function(i, item){
+					var type = item.type;
+					if(typeobj[type] == null){
+						typeobj[type] = j;
+						j++;
+					}
+				})
+				
+				//第二层
+				var templist = []; 
+				$.each(data1, function(i, item){
+					var reg = item.in_reg;
+					var pid = regobj[reg];
+					if(!templist.contains(reg)){
+						templist.push(reg);
+						rows.push({"id":pid*10+1, "_parentId": pid, "name":"区域内", "capacity": item.c_in1, "line": item.l_in1});
+						rows.push({"id":pid*10+2, "_parentId": pid, "name":"区域外", "capacity": item.c_out1, "line": item.l_out1})
 					}
 				});
 				
-				for(var i=0; i<reglist.length; i++){
-					var to_reglist = [],typelist = [], row = [{}];
-					for(var j=0; j<data1.length; j++){
-						var in_reg = data1[j]["in_reg"];
-						if(reglist[i] === in_reg) {
-							var to_reg = data1[j]["to_reg"];
-							var type = data1[j]["type"];
-							if(!to_reglist.contains(to_reg)){
-								to_reglist.push(to_reg);
-								row["route"] = in_reg + "→" + to_reg;
-								if(!typelist.contains(type)){
-									typelist.push(type);
-									row["route"]["type"]["capacity"] += data1[j]["numb"]
-									row["route"]["type"]["line"] += data1[j]["cnt"]
-								}
-								;
-								//row["capacity"]
-							}
-							
-						}
+				//第三层区域内
+				var j = 1;  var templist = [];
+				$.each(data1, function(i, item){
+					var type = item.in_reg + item.type;
+					var pid = regobj[item.in_reg];
+					if((!templist.contains(type))&&(item.c_in != 0) &&(item.l_in != 0) ){
+						templist.push(type);
+						rows.push({"id":pid*100+10+typeobj[item.type], "_parentId": pid*10+1, "name":item.type, "capacity":item.c_in, "line":item.l_in})
 					}
-				}				
-			}
+				});
+				
+				//第三层区域外
+				var j = 1; var templist = []; var route = {};
+				$.each(data1, function(i, item){
+					var in_to = item.in_reg + "→" + item.to_reg;
+					var pid = regobj[item.in_reg];
+					if(!templist.contains(in_to)){
+						templist.push(in_to);
+						rows.push({"id":pid*100+20+j, "_parentId": pid*10+2, "name":in_to, "capacity":item.c_out2, "line":item.l_out2})
+					}
+					route[in_to] = pid*100+20+j;
+				});
+				
+				//第四层区域外
+				var j = 1; var templist = [];
+				$.each(data1, function(i, item){
+					var in_to = item.in_reg + "→" + item.to_reg;
+					var type = in_to + item.type;
+					var pid = route[in_to];
+					if(!templist.contains(type)){
+						templist.push(type);
+						rows.push({"id":pid*10+j, "_parentId": pid, "name":item.type, "capacity":item.c_out, "line":item.l_out})
+					}
+				});
+				
+				
+				json["rows"] = rows;
+				
+				$("#tree").treegrid({
+					idField:'id',
+					treeField:'name',
+					width: 900,
+					height: 900,
+					//rownumbers: true,
+					//showFooter: true,
+					//animate: true,
+					data: json
+				});
+			};
+				
+
+			
+			
 		</script>
 	</head>
 	<body>
