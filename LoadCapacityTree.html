@@ -18,26 +18,38 @@
 		<!-- <script type = "text/javascript" src = "../src/main/webapp/more/bi_template/common.js"></script> -->
 		<!-- <script type = "text/javascript" src = "../src/main/webapp/pages/js/common.js"></script> -->
 		<script type = "text/javascript">
-			var data; //, data2, data3
-			// data1 按区域选项中的区域外数据， data2 按区域选项中的区域内数据， data3 按分拨选择
-			var DATA_URL = "http://10.45.10.216:8080/tss/data/json/2153";
-			//var	URL2 = "http://10.45.10.216:8080/tss/data/json/2150";
+			var data, data1;
+			
+			var DATA_URL = "http://10.45.10.216:8080/tss/data/json/2150";
+
 			
 			
 			var method = "POST";
-			var params = {"param1": "-1"};
+			var param1 = {"param1": "按区域","param2": "-1" };
+			var param2 = {"param1": "按分拨","param2": "-1" };
 			
 
-			
+			/*
 			$(function(){
 				tssJS.ajax({
 				url: DATA_URL,
-				params: params,
+				params: param1,
 				method: method,
 				waiting: true,
 				ondata: function(){
 					data =  this.getResponseJSON();
-					datatree(data);
+					//datatree(data);
+					}
+				});	
+				
+				tssJS.ajax({
+				url: DATA_URL,
+				params: param2,
+				method: method,
+				waiting: true,
+				ondata: function(){
+					data1 =  this.getResponseJSON();
+					//datatree1(data1);
 					}
 				});	
 					
@@ -137,8 +149,46 @@
 			
 				
 		};
+		*/
+			function datatree1(data1){
+				var json = {}, rows = [], footer = [];
+				var reglist = [], centerlist = [], typelist = [];
+				var regid = {}, centerid = {}, typeid = {};
+				var k = 1, s = 1, t = 1;
+				var center_a = {}, reg_a = {};
+				
+				
+				//id初始化
+				$.each(data1, function(i, item){
+					if(!reglist.contains(item.reg)){
+						reglist.push(item.reg);
+						regid[item.reg] = k;
+						k++;
+					};
+					if(!centerlist.contains(item.center)){
+						centerlist.push(item.center);
+						centerid[item.center] = s;
+						center_a[item.center]["capacity"] = 0;
+						center_a[item.center]["line"] = 0;
+						s++;
+					};
+					if(!typelist.contains(item.type)){
+						typelist.push(item.type);
+						typeid[item.type] = t;
+						t++;
+					};
+					
+				});
+				
+				
+				$.each(data1, function(i, item){
+					var reg = item.reg, center = item.center, type = item.type;
+					rows.push({"id":regid[reg]*10000+centerid[center]*10+typeid[type], "_parentId":regid[reg]*1000+centerid[center], "name":type, "capacity": item.capacity, "line":item.line});
+					center_a[center][]
+				})
+				
+			};
 			
-
 			
 			
 		</script>
