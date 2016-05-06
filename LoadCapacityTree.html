@@ -83,7 +83,7 @@
 					};
 				}
 				
-				//最后一层赋值，并计算上一层值
+				//最后子节点赋值，按车型，并计算上一层值
 				for(var i = 0; i < data.length; i++){
 					route = data[i]["in_reg"] + "→" + data[i]["to_reg"];
 					var reg = data[i]["in_reg"], type = data[i]["type"], capacity = data[i]["capacity"], line = data[i]["line"];
@@ -97,14 +97,14 @@
 						route_out_l[route] += line;
 					};
 				}
-				
+				//区域外出发区域到目的区域
 				for(var key in route_out_c){
 					var reg = key.substring(0,4);
 					rows.push({"id":regid[reg]*1000+200+routeid[key], "_parentId":regid[reg]*100+20, "name":key, "capacity":route_out_c[key], "line":route_out_l[key], "state":"closed"});
 					area_out_c[reg] += route_out_c[key];
 					area_out_l[reg] +=route_out_l[key];
 				}
-				
+				//区域内外
 				for(var key in area_in_c){
 						rows.push({"id":regid[key]*10+1, "_parentId":regid[key], "name":"区域内", "capacity":area_in_c[key], "line":area_in_l[key], "state":"closed"});
 						rows.push({"id":regid[key]*100+20, "_parentId":regid[key], "name":"区域外", "capacity":area_out_c[key], "line":area_out_l[key], "state":"closed"});
@@ -112,7 +112,7 @@
 						reg_l[key] += area_in_l[key] + area_out_l[key];
 						
 					};
-				
+				//第一层，每个区域累加
 				for(var key in reg_c){
 					rows.push({"id":regid[key],"name":key, "capacity":Math.round(reg_c[key]*100)/100, "line":reg_l[key], "state":"closed"});
 					all_c += reg_c[key];
