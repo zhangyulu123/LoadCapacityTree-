@@ -18,121 +18,126 @@
 		<!-- <script type = "text/javascript" src = "../src/main/webapp/more/bi_template/common.js"></script> -->
 		<!-- <script type = "text/javascript" src = "../src/main/webapp/pages/js/common.js"></script> -->
 		<script type = "text/javascript">
-			var data1; //, data2, data3
+			var data; //, data2, data3
 			// data1 按区域选项中的区域外数据， data2 按区域选项中的区域内数据， data3 按分拨选择
-			var URL1 = "http://10.45.10.216:8080/tss/data/json/2168";
+			var DATA_URL = "http://10.45.10.216:8080/tss/data/json/2153";
 			//var	URL2 = "http://10.45.10.216:8080/tss/data/json/2150";
 			
 			
 			var method = "POST";
-			//var params = {"param1": "-1"};
+			var params = {"param1": "-1"};
 			
 
 			
 			$(function(){
-			
 				tssJS.ajax({
-				url: URL1,
-				params: {"param1": "-1"},
+				url: DATA_URL,
+				params: params,
 				method: method,
 				waiting: true,
 				ondata: function(){
-					data1 =  this.getResponseJSON();
-					tree(data1)
+					data =  this.getResponseJSON();
+					datatree(data);
 					}
 				});	
-				
-				
+					
 			});
+
+			
+			function  datatree(data){
+				var json = {}, rows = [], footer = [];
+				var reglist = [], routelist = [], typelist = [];
+				var regid = {}, typeid = {}, routeid = {} ;//包含名称和id
+				var s = 1, t = 1, k = 1, route;
+				var area_in_c = {}, area_in_l = {}, area_out_c = {}, area_out_l = {};
+				var route_out_c = {}, route_out_l = {},reg_c= {}, reg_l = {}, all_c = 0, all_l = 0;
 				
-			function tree(data1){
-				var regobj = new Object(), typeobj = new Object();
-				var rows = [];
-				var json = {"rows":[], "footer":[]};
-				var j = 1;
+				//id初始化
+				for(var i = 0; i < data.length; i++){
+					if(!typelist.contains(data[i]["type"])){
+							typelist.push(data[i]["type"]);
+							typeid[data[i]["type"]] = t;
+							t++
+						};
+					if(data[i]["to_reg"] == null){
+						if(!reglist.contains(data[i]["in_reg"])){
+							reglist.push(data[i]["in_reg"]);
+							regid[data[i]["in_reg"]] = s;
+							area_in_c[data[i]["in_reg"]] = 0;
+							area_in_l[data[i]["in_reg"]] = 0;
+							area_out_c[data[i]["in_reg"]] = 0;
+							area_out_l[data[i]["in_reg"]] = 0;
+							reg_c[data[i]["in_reg"]] = 0;
+							reg_l[data[i]["in_reg"]] = 0;
+							s++;
+						};
+					}else{
+						route = data[i]["in_reg"] + "→" + data[i]["to_reg"];
+						if(!routelist.contains(route)){
+							routelist.push(route);
+							routeid[route] = k;
+							route_out_c[route] = 0;
+							route_out_l[route] = 0;
+							k++;
+						};
+					};
+				}
 				
-				//区域编号
-				$.each(data1, function(i, item){
-					var reg = item.in_reg; 
-					if(regobj[reg] == null){
-						regobj[reg] = j;
-						//console.log(regobj);
-						rows.push({"id":j, "_parentId":null, "name":reg, "capacity": item.c_in1+item.c_out, "line": item.l_in1+item.l_out1,"state":"closed"});
-						j++;
-					};	
-				});
-				//车型编号
-				var j = 1
-				$.each(data1, function(i, item){
-					var type = item.type;
-					if(typeobj[type] == null){
-						typeobj[type] = j;
-						j++;
-					}
-				})
+				//最后一层赋值，并计算上一层值
+				for(var i = 0; i < data.length; i++){
+					route = data[i]["in_reg"] + "→" + data[i]["to_reg"];
+					var reg = data[i]["in_reg"], type = data[i]["type"], capacity = data[i]["capacity"], line = data[i]["line"];
+					if(data[i]["to_reg"] == null){
+						rows.push({"id":regid[reg]*100+10+typeid[type], "_parentId":regid[reg]*10+1, "name":type, "capacity":capacity, "line":line});
+						area_in_c[reg] += capacity;
+						area_in_l[reg] += line;
+					}else{
+						rows.push({"id":regid[reg]*10000+2000+routeid[route]*10+typeid[type], "_parentId":regid[reg]*1000+200+routeid[route], "name":type, "capacity":capacity, "line":line});
+						route_out_c[route] += capacity;
+						route_out_l[route] += line;
+					};
+				}
 				
-				//第二层
-				var templist = []; 
-				$.each(data1, function(i, item){
-					var reg = item.in_reg;
-					var pid = regobj[reg];
-					if(!templist.contains(reg)){
-						templist.push(reg);
-						rows.push({"id":pid*10+1, "_parentId": pid, "name":"区域内", "capacity": item.c_in1, "line": item.l_in1,"state":"closed"});
-						rows.push({"id":pid*10+2, "_parentId": pid, "name":"区域外", "capacity": item.c_out1, "line": item.l_out1,"state":"closed"})
-					}
-				});
+				for(var key in route_out_c){
+					var reg = key.substring(0,4);
+					rows.push({"id":regid[reg]*1000+200+routeid[key], "_parentId":regid[reg]*100+20, "name":key, "capacity":route_out_c[key], "line":route_out_l[key], "state":"closed"});
+					area_out_c[reg] += route_out_c[key];
+					area_out_l[reg] +=route_out_l[key];
+				}
 				
-				//第三层区域内
-				var j = 1;  var templist = [];
-				$.each(data1, function(i, item){
-					var type = item.in_reg + item.type;
-					var pid = regobj[item.in_reg];
-					if((!templist.contains(type))&&(item.c_in != 0) &&(item.l_in != 0) ){
-						templist.push(type);
-						rows.push({"id":pid*100+10+typeobj[item.type], "_parentId": pid*10+1, "name":item.type, "capacity":item.c_in, "line":item.l_in,"state":"closed"})
-					}
-				});
+				for(var key in area_in_c){
+						rows.push({"id":regid[key]*10+1, "_parentId":regid[key], "name":"区域内", "capacity":area_in_c[key], "line":area_in_l[key], "state":"closed"});
+						rows.push({"id":regid[key]*100+20, "_parentId":regid[key], "name":"区域外", "capacity":area_out_c[key], "line":area_out_l[key], "state":"closed"});
+						reg_c[key] += area_in_c[key] + area_out_c[key];
+						reg_l[key] += area_in_l[key] + area_out_l[key];
+						
+					};
 				
-				//第三层区域外
-				var j = 1; var templist = []; //var route = {};
-				$.each(data1, function(i, item){
-					var in_to = item.in_reg + "→" + item.to_reg;
-					var pid = regobj[item.in_reg];
-					if(!templist.contains(in_to)){
-						templist.push(in_to);
-						rows.push({"id":pid*1000+200+pid*10+regobj[item.to_reg], "_parentId": pid*10+2, "name":in_to, "capacity":item.c_out2, "line":item.l_out2,"state":"closed"})
-					}
-					//route[in_to] = pid*100+20+j;
-				});
+				for(var key in reg_c){
+					rows.push({"id":regid[key],"name":key, "capacity":Math.round(reg_c[key]*100)/100, "line":reg_l[key], "state":"closed"});
+					all_c += reg_c[key];
+					all_l += reg_l[key];
+				};
 				
-				//第四层区域外
-				var j = 1; var templist = [];
-				$.each(data1, function(i, item){
-					var in_to = item.in_reg + "→" + item.to_reg;
-					var type = in_to + item.type;
-					var pid = regobj[item.in_reg];
-					if(!templist.contains(type)){
-						templist.push(type);
-						rows.push({"id":pid*10000+2000+pid*100+regobj[item.to_reg]*10+typeobj[item.type], "_parentId": pid*1000+200+pid*10+regobj[item.to_reg], "name":item.type, "capacity":item.c_out, "line":item.l_out,"state":"closed"})
-					}
-				});
+				footer.push({"name": "全网", "capacity": all_c, "line": all_l});
+				json["rows"]= rows;
+				json["footer"] = footer;
 				
+			$("#tree").treegrid({
+				idField:'id',
+				treeField:'name',
+				width: 700,
+				height: 500,
+				//rownumbers: true,
+				showFooter: true,
+				animate: true,
+				data: json
+			})
+			
+			
 				
-				json["rows"] = rows;
-				
-				$("#tree").treegrid({
-					idField:'id',
-					treeField:'name',
-					width: 900,
-					height: 900,
-					//rownumbers: true,
-					//showFooter: true,
-					//animate: true,
-					data: json
-				});
-			};
-				
+		};
+			
 
 			
 			
