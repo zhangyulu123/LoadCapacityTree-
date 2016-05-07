@@ -21,7 +21,6 @@
 			var data, data1;
 			
 			var DATA_URL = "http://10.45.10.216:8080/tss/data/json/2150";
-
 			
 			
 			var method = "POST";
@@ -29,8 +28,9 @@
 			var param2 = {"param1": "按分拨","param2": "-1" };
 			
 
-			/*
+			
 			$(function(){
+			 
 				tssJS.ajax({
 				url: DATA_URL,
 				params: param1,
@@ -38,7 +38,7 @@
 				waiting: true,
 				ondata: function(){
 					data =  this.getResponseJSON();
-					//datatree(data);
+					datatree(data);
 					}
 				});	
 				
@@ -49,7 +49,7 @@
 				waiting: true,
 				ondata: function(){
 					data1 =  this.getResponseJSON();
-					//datatree1(data1);
+					datatree1(data1);
 					}
 				});	
 					
@@ -131,9 +131,11 @@
 					all_l += reg_l[key];
 				};
 				
+				
 				footer.push({"name": "全网", "capacity": all_c, "line": all_l});
 				json["rows"]= rows;
 				json["footer"] = footer;
+				json["total"] = rows.length;
 				
 			$("#tree").treegrid({
 				idField:'id',
@@ -149,46 +151,82 @@
 			
 				
 		};
-		*/
-			function datatree1(data1){
-				var json = {}, rows = [], footer = [];
-				var reglist = [], centerlist = [], typelist = [];
-				var regid = {}, centerid = {}, typeid = {};
-				var k = 1, s = 1, t = 1;
-				var center_a = {}, reg_a = {};
+		
+		
+		
+		function datatree1(data1){
+			var json = {}, rows = [], footer = [];
+			var reglist = [], centerlist = [], typelist = [];
+			var regid = {}, centerid = {}, typeid = {};
+			var k = 1, s = 1, t = 1;
+			var center_a = [], reg_a = [], all = [];
+			var reg_to_center = [];//分拨和区域的从属关系
+			
+			
+			//id初始化
+			$.each(data1, function(i, item){
+				if(!reglist.contains(item.reg)){
+					var center_to_reg[item.reg] = []; //center放到对应的reg中
+					reglist.push(item.reg);
+					regid[item.reg] = k;
+					reg_a[item.reg]["capacity"] = 0;
+					reg_a[item.reg]["line"] = 0;
+					k++;
+				};
+				if(!centerlist.contains(item.center)){
+					centerlist.push(item.center);
+					centerid[item.center] = s;
+					center_a[item.center]["capacity"] = 0;
+					center_a[item.center]["line"] = 0;
+					s++;
+				};
+				if(!typelist.contains(item.type)){
+					typelist.push(item.type);
+					typeid[item.type] = t;
+					t++;
+				};
 				
-				
-				//id初始化
-				$.each(data1, function(i, item){
-					if(!reglist.contains(item.reg)){
-						reglist.push(item.reg);
-						regid[item.reg] = k;
-						k++;
-					};
-					if(!centerlist.contains(item.center)){
-						centerlist.push(item.center);
-						centerid[item.center] = s;
-						center_a[item.center]["capacity"] = 0;
-						center_a[item.center]["line"] = 0;
-						s++;
-					};
-					if(!typelist.contains(item.type)){
-						typelist.push(item.type);
-						typeid[item.type] = t;
-						t++;
-					};
-					
-				});
-				
-				
-				$.each(data1, function(i, item){
-					var reg = item.reg, center = item.center, type = item.type;
-					rows.push({"id":regid[reg]*10000+centerid[center]*10+typeid[type], "_parentId":regid[reg]*1000+centerid[center], "name":type, "capacity": item.capacity, "line":item.line});
-					center_a[center][]
-				})
-				
+			});
+			
+			
+			$.each(data1, function(i, item){
+				var reg = item.reg, center = item.center, type = item.type;
+				rows.push({"id":regid[reg]*10000+centerid[center]*10+typeid[type], "_parentId":regid[reg]*1000+centerid[center], "name":type, "capacity": item.capacity, "line":item.line});
+				center_a[center]["capacity"] += item.capacity;
+				center_a[center]["line"] += item.line;
+				if(!center_to_reg[reg].contains(center)){
+					center_to_reg[reg].push(center);
+				};
+			});
+			
+			for(var key in center_to_reg){
+				for(var center in center_reg[key]){
+					rows.push({"id":regid[key]*1000+centerid[center], "_parentId":regid[key], "name":center, "capacity": center_a[center]["capacity"], "line":center_a[center]["line"], "state": "closed"});
+					reg_a[key]["capacity"] += center_a[center]["capacity"];
+					reg_a[key]["line"] += center_a[center]["line"];
+				};
+				rows.push({"id":regid[key], "name":key, "capacity": reg_a[key]["capacity"], "line":reg_a[key]["line"], "state": "closed"});
+				all["capacity"] += reg_a[key]["capacity"];
+				all["line"] += reg_a[key]["line"];
 			};
 			
+			footer.push({"name": "全网", "capacity": all["capacity"], "line": all["line"]});
+			json["rows"]= rows;
+			son["footer"] = footer;
+			json["total"] = rows.length;
+			
+			$("#tree").treegrid({
+				idField:'id',
+				treeField:'name',
+				width: 700,
+				height: 500,
+				//rownumbers: true,
+				showFooter: true,
+				animate: true,
+				data: json
+			});	
+		};
+		
 			
 			
 		</script>
