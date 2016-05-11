@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv = "X-UA-Compatible" content = "IE = edge" charset = "UTF-8"/> 
+		<title>TEST</title>
+		<!-- <link rel = "stylesheet" href = "../src/main/webapp/pages/css/wanma.css"/> -->
+		<link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/default/easyui.css"/>
+		<!-- <link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/icon.css"/> -->
+		
+		<script type = "text/javascript" src = "../src/main/webapp/tools/tssJS/tssJS.all.js"></script>
+		
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.min.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.easyui.min.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/easyui-lang-zh_CN.js"></script>
+		
+		<script type = "text/javascript" src = "../src/main/webapp/tools/echarts/echarts-3.1.5.js"></script>
+		<!-- <script type = "text/javascript" src = "../src/main/webapp/more/bi_template/echart.js"></script> -->
+		<!-- <script type = "text/javascript" src = "../src/main/webapp/more/bi_template/common.js"></script> -->
+		<!-- <script type = "text/javascript" src = "../src/main/webapp/pages/js/common.js"></script> -->
+		<script type = "text/javascript">
+			var data;
+			
+			var DATA_URL = "http://10.45.10.216:8080/tss/data/json/2150";
+			
+			
+			var method = "POST";
+			var param = {"param1": "-1" };
+			
+
+			
+			$(function(){
+			 
+				tssJS.ajax({
+				url: DATA_URL,
+				params: param,
+				method: method,
+				waiting: true,
+				ondata: function(){
+					data =  this.getResponseJSON();
+					//datatree(data);
+					}
+				});	
+						
+			});
+
+			function show(data){
+				var detail = [];
+				var a_c = 0, a_b = 0, b_c = 0, b_a = 0; 
+				$.each(data, function(i, item){
+					var load = item.load;
+					if(item.site_cnt == item.center_cnt){
+						if(item.site_cnt == 2){
+							detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift,"truck_type": item.truck_type, "frequency": item.frequency, "l_s": item.cd,  "a_b": 0, "a_c": load, "b_c": 0, "b_a":0});
+						}else if(item.site_cnt == 3){
+							if(item.node1 == item.node3){
+								detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "truck_type": item.truck_type,"frequency": item.frequency, "l_s": item.cd,  "a_b": load, "a_c": 0, "b_c": 0, "b_a":load});
+							}else{
+								A_B_C(detail, item.schedule_id,item.route_name, item.shift, item.type1, item.type2, item.type3, item.truck_type, item.frequency, item.fk, item.model1, item.cd, load);
+							/*
+								if(item.fk == "是"){
+									detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 0, "a_c": 0, "b_c": load, "b_a":0});
+								}else{
+									if(item.model1 == "全装全卸"){
+										detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": load, "a_c": 0, "b_c": load, "b_a":0});
+									}else if(item.model1 == "先卸后装"){
+										detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 0.5*load, "a_c": 0.5*load, "b_c": load, "b_a":0});
+									}else if(item.model1 == "只卸不装"){
+										if(item.type2 = "转运中心" && item.type3 = "转运中心"){
+											detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 0.5*load, "a_c": 0.5*load, "b_c": 0, "b_a":0});
+										}else if(item.type2 = "转运中心" && item.type3 = "集散中心"){
+											detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 2/3*load, "a_c": 1/3*load, "b_c": 0, "b_a":0});
+										}else{
+											detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 1/3*load, "a_c": 2/3*load, "b_c": 0, "b_a":0});
+										}
+									}else{
+										if(item.type1 = "转运中心" && item.type2 = "转运中心"){
+											detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 0, "a_c": 0.5*load, "b_c": 0.5*load, "b_a":0});
+										}else if(item.type1 = "转运中心" && item.type2 = "集散中心"){
+											detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 0, "a_c": 2/3*load, "b_c": 1/3*load, "b_a":0});
+										}else{
+											detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 0, "a_c": 1/3*load, "b_c": 2/3*load, "b_a":0});
+										}
+									};
+								};*/
+							};
+						}else if(item.site_cnt == 4){
+							if(item.fk == '是'){
+								A_B_C(detail, item.schedule_id,item.route_name, item.shift, item.type2, item.type3, item.type4, item.truck_type, item.frequency, item.fk, item.model1, item.cd, load);
+							}else{
+								a_c = load + 
+								a_b = 
+								b_c = 
+								b_a = 
+							}
+						}
+					}else{
+						
+					} 
+				})
+			}
+			
+			function A_B_C(list, schedule_id,route_name, shift, type1, type2, type3, truck_type, frequency, fk, model, cd, load){
+				if(fk == "是"){
+					//list.push({"schedule_id":schedule_id, "route_name": route_name, "shift": shift, "frequency": frequency, "l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 0, "b_c": load, "b_a":0});
+					list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency, cd, load, 0, load, 0));	
+				}else{
+					if(model == "全装全卸"){
+						//list.push({"schedule_id":schedule_id, "route_name": route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": load, "a_c": 0, "b_c": load, "b_a":0});
+						list.push(to_obj(schedule_id, route_name, shift, truck_type,frequency,  cd,load, 0, load, 0));
+					}else if(model == "先卸后装"){
+						//list.push({"schedule_id":schedule_id, "route_name": route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 0.5*load, "a_c": 0.5*load, "b_c": 0.5*load, "b_a":0});
+						list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency,  cd,  0.5*load, 0.5*load, 0.5*load, 0));
+					}else if(model == "只卸不装"){
+						if(type2 = "转运中心" && type3 = "转运中心"){
+							//list.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 0.5*load, "a_c": 0.5*load, "b_c": 0, "b_a":0});
+							list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency,  cd,  0.5*load, 0.5*load, 0, 0));
+						}else if(type2 = "转运中心" && type3 = "集散中心"){
+							//list.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 2/3*load, "a_c": 1/3*load, "b_c": 0, "b_a":0});
+							list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency,  cd,  2/3*load, 1/3*load, 0, 0));
+						}else{
+							//list.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 1/3*load, "a_c": 2/3*load, "b_c": 0, "b_a":0});
+							list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency,  cd,  1/3*load, 2/3*load, 0, 0));
+						}
+					}else{
+						if(type1 = "转运中心" && type2 = "转运中心"){
+							//list.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 0.5*load, "b_c": 0.5*load, "b_a":0});
+							list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency,  cd,  0, 0.5*load, 0.5*load, 0));
+						}else if(type1 = "转运中心" && type2 = "集散中心"){
+							//list.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 2/3*load, "b_c": 1/3*load, "b_a":0});
+							list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency,  cd,  0, 2/3*load, 1/3*load, 0));
+						}else{
+							//list.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 1/3*load, "b_c": 2/3*load, "b_a":0});
+							list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency,  cd,  0, 1/3*load, 2/3*load, 0));
+						}
+					};
+				};
+			};
+			
+			function to_obj(schedule_id, route_name, shift, truck_type,frequency,cd, a_b, a_c, b_c, b_a){
+				var obj = {};
+				obj = {"schedule_id":schedule_id, "route_name": route_name, "shift": shift, "truck_type": truck_type,"frequency": frequency, "l_s": cd,  "a_b": a_b, "a_c": a_c, "b_c": b_c, "b_a":b_a};
+				return obj;
+			};
+			
+		</script>
+	</head>
+	<body>
+		<div>
+			<div id = 'tab' class="easyui-tabs" style = "width:100%; height:100%">
+				<div title = '运力明细'>
+					<table id = "grid" >
+						<!--<thead frozen = 'true'>
+							<tr>
+								<th data-options = "field: 'schedule_id'">班车编号</th>
+								<th data-options = "field: 'route_name'">线路</th>
+								<th data-options = "field: 'shift'">班次</th>
+								<th data-options = "field: 'l_s'">长短线</th>
+								<th data-options = "field: 'truck_type'">车型</th>
+								<th data-options = "field: a_b">A-B</th>
+								<th data-options = "field: a_c">A-C</th>
+								<th data-options = "field: b_a">B-A</th>
+								<th data-options = "field: b_c">B-C</th>
+							</tr>
+						</thead>-->
+					</table>
+				</div>
+				<div title = '按区域运力汇总'>
+					<table id = 'tree1'>
+						<thead>
+							<tr>
+								<th data-options = "field: 'name'" width = "20%">名称</th>
+								<th data-options = "field: 'l_line'" width = "10%">长线数量</th>
+								<th data-options = "field: 's_line'" width = "10%">短线数量</th>
+								<th data-options = "field: 'line'" width = "20%">车线总计</th>
+								<th data-options = "field: 'l_capacity'" width = "10%">长线运力</th>
+								<th data-options = "field: 's_capacity'" width = "10%">短线运力</th>
+								<th data-options = "field: 'capacity'" width = "20%">运力总计</th>
+							</tr>
+						</thead>
+					</table>	
+				</div>
+				<div title = '按分拨运力汇总'>
+					<table id = 'tree2'>
+						<thead>
+							<tr>
+								<th data-options = "field: 'name'" width = "20%">名称</th>
+								<th data-options = "field: 'l_line'" width = "10%">长线数量</th>
+								<th data-options = "field: 's_line'" width = "10%">短线数量</th>
+								<th data-options = "field: 'line'" width = "20%">车线总计</th>
+								<th data-options = "field: 'l_capacity'" width = "10%">长线运力</th>
+								<th data-options = "field: 's_capacity'" width = "10%">短线运力</th>
+								<th data-options = "field: 'capacity'" width = "20%">运力总计</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+				
+				
+			</div>
+		</div>
+	</body>
+</html>
