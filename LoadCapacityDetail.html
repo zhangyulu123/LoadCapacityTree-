@@ -37,110 +37,505 @@
 				waiting: true,
 				ondata: function(){
 					data =  this.getResponseJSON();
-					//datatree(data);
+					show(data);
 					}
 				});	
 						
 			});
 
 			function show(data){
-				var detail = [];
+				var detail = [], inlist = [], outlist = [], templist = [], countlist = [];
 				var a_c = 0, a_b = 0, b_c = 0, b_a = 0; 
+				var list, split1, split2;
+				
+				var type = item.truck_type, cd = item.cd;
 				$.each(data, function(i, item){
 					var load = item.load;
-					if(item.site_cnt == item.center_cnt){
-						if(item.site_cnt == 2){
-							detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift,"truck_type": item.truck_type, "frequency": item.frequency, "l_s": item.cd,  "a_b": 0, "a_c": load, "b_c": 0, "b_a":0});
-						}else if(item.site_cnt == 3){
-							if(item.node1 == item.node3){
-								detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "truck_type": item.truck_type,"frequency": item.frequency, "l_s": item.cd,  "a_b": load, "a_c": 0, "b_c": 0, "b_a":load});
-							}else{
-								A_B_C(detail, item.schedule_id,item.route_name, item.shift, item.type1, item.type2, item.type3, item.truck_type, item.frequency, item.fk, item.model1, item.cd, load);
+					var r1 = item.reg1, r2 = item.reg2, r3 = item.reg3, r4 = item.reg4, r5 = item.reg5;
+					var c1 = item.node1, c2 = item.node2, c3 = item.node3, c4 = item.node4, c5 = item.node5;
+					if(item.site_cnt == item.center_cnt){ //没有经停网点
+						if(item.site_cnt == 2){ //A-C
+							//detail.push({"match_id":item.match_id, "route_name": item.route_name, "shift": item.shift,"truck_type": type, "frequency": item.frequency, "l_s": cd,  "a_b": 0, "a_c": load, "b_c": 0, "b_a":0});
+							list = A_C(item.match_id,item.route_name, item.shift, type, item.frequency,  cd, load);
+							detail.push(list);
+							//按区域汇总源数据统计
+							to_detail(templist, countlist, r1, r2, type, cd, 0,list.a_c, 0, 0);
 							/*
-								if(item.fk == "是"){
-									detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 0, "a_c": 0, "b_c": load, "b_a":0});
+							if(r1 == r2){
+								
+								if(!templist.contains(r1+r2+type+cd)){
+									var countlist[r1+r2][type][cd] = 0;
+									countlist[r1+r2][type][cd] = item.a_c;
 								}else{
-									if(item.model1 == "全装全卸"){
-										detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": load, "a_c": 0, "b_c": load, "b_a":0});
-									}else if(item.model1 == "先卸后装"){
-										detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 0.5*load, "a_c": 0.5*load, "b_c": load, "b_a":0});
-									}else if(item.model1 == "只卸不装"){
-										if(item.type2 = "转运中心" && item.type3 = "转运中心"){
-											detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 0.5*load, "a_c": 0.5*load, "b_c": 0, "b_a":0});
-										}else if(item.type2 = "转运中心" && item.type3 = "集散中心"){
-											detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 2/3*load, "a_c": 1/3*load, "b_c": 0, "b_a":0});
-										}else{
-											detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 1/3*load, "a_c": 2/3*load, "b_c": 0, "b_a":0});
-										}
-									}else{
-										if(item.type1 = "转运中心" && item.type2 = "转运中心"){
-											detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 0, "a_c": 0.5*load, "b_c": 0.5*load, "b_a":0});
-										}else if(item.type1 = "转运中心" && item.type2 = "集散中心"){
-											detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 0, "a_c": 2/3*load, "b_c": 1/3*load, "b_a":0});
-										}else{
-											detail.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": item.shift, "l_s": item.cd, "truck_type": item.truck_type, "a_b": 0, "a_c": 1/3*load, "b_c": 2/3*load, "b_a":0});
-										}
-									};
-								};*/
-							};
-						}else if(item.site_cnt == 4){
-							if(item.fk == '是'){
-								A_B_C(detail, item.schedule_id,item.route_name, item.shift, item.type2, item.type3, item.type4, item.truck_type, item.frequency, item.fk, item.model1, item.cd, load);
+									countlist[r1+r2][type][cd] += item.a_c;
+								};
 							}else{
-								a_c = load + 
-								a_b = 
-								b_c = 
-								b_a = 
+								if(!templist.contains(r1+r2+type+cd)){
+									var countlist[r1+r2][type][cd] = 0;
+									countlist[r1+r2][type][cd] = item.a_c;
+								}else{
+									countlist[r1+r2][type][cd] += item.a_c;
+								};
+							};*/
+							
+							//按分拨汇总源数据统计
+							to_detail(templist, countlist, r1, c1, type, cd, 0, list.a_c, 0, 0);
+							/*
+							if(!templist.contains(r1+c1+type+cd)){
+								var countlist[r1+c1][type][cd] = 0;
+								countlist[r1+c1][type][cd] = item.a_c;
+							}else{
+								countlist[r1+c1][type][cd] += item.a_c;
+							};*/
+							
+						}else if(item.site_cnt == 3){ 
+							if(item.node1 == item.node3 && item.node1 <> item.node2){//A_B_A
+								//detail.push({"match_id":item.match_id, "route_name": item.route_name, "shift": item.shift, "truck_type": type,"frequency": item.frequency, "l_s": cd,  "a_b": load, "a_c": 0, "b_c": 0, "b_a":load});
+								list = A_B_A(item.match_id,item.route_name, item.shift, type, item.frequency, cd, load);
+								detail.push(list);
+								if(r1 == r2 && r2 == r3){
+									to_detail(templist, countlist, r1, r2, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
+									to_detail(templist, countlist, r2, r3, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
+								}else{
+									to_detail(templist, countlist, r1, r2, type, cd, list.a_b, list.a_c, 0, 0);
+									to_detail(templist, countlist, r2, r3, type, cd, 0, 0, list.b_c, list.b_a);
+								};
+								to_detail(templist, countlist, r1, c1, type, cd, list.a_b, list.a_c, 0, 0);
+								to_detail(templist, countlist, r2, c2, type, cd, 0, 0, list.b_c, list.b_a);
+							}else{ //A_B_C
+								list = A_B_C(item.match_id,item.route_name, item.shift, item.type1, item.type2, item.type3, type, item.frequency, item.fk, item.model1, cd, load);
+								detail.push(list);
+								if(r1 == r2 && r2 == r3){
+									to_detail(templist, countlist, r1, r2, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
+									to_detail(templist, countlist, r2, r3, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
+								}else{
+									to_detail(templist, countlist, r1, r2, type, cd, list.a_b, list.a_c, 0, 0);
+									to_detail(templist, countlist, r2, r3, type, cd, 0, 0, list.b_c, list.b_a);
+								};
+								to_detail(templist, countlist, r1, c1, type, cd, list.a_b, list.a_c, 0, 0);
+								to_detail(templist, countlist, r2, c2, type, cd, 0, 0, list.b_c, list.b_a);
+							};
+						}else if(item.site_cnt == 4){ //A-B-C-D的情况
+							if(item.fk == '是'){
+								list = A_B_C(item.match_id,item.route_name, item.shift, item.type2, item.type3, item.type4, type, item.frequency, item.fk, item.model1, cd, load);
+								detail.push(list);
+								if(r2 == r3 && r3 == r4){
+									to_detail(templist, countlist, r2, r3, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
+									to_detail(templist, countlist, r3, r4, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
+								}else{
+									to_detail(templist, countlist, r2, r3, type, cd, list.a_b, list.a_c, 0, 0);
+									to_detail(templist, countlist, r3, r4, type, cd, 0, 0, list.b_c, list.b_a);
+								};
+								//to_detail(templist, countlist, r2, r3, type, cd, list.a_b, list.a_c, 0, 0);
+								//to_detail(templist, countlist, r3, r4, type, cd, 0, 0, list.b_c, list.b_a);
+								to_detail(templist, countlist, r2, c2, type, cd, list.a_b, list.a_c, 0, 0);
+								to_detail(templist, countlist, r3, c3, type, cd, 0, 0, list.b_c, list.b_a);
+							}else{
+								//拆分为A-B-C和A-C
+								split1 = A_B_C(item.match_id,item.route_name, item.shift, item.type1, item.type2, item.type3, type, item.frequency, item.fk, item.model1, cd, load);
+								split2 = A_C(item.match_id,item.route_name, item.shift, type, item.frequency, cd, load)
+								a_c = split1.a_c + split2.a_c;
+								a_b = split1.a_b + split2.a_b;
+								b_c = split1.b_c + split2.b_c;
+								b_a = split1.b_a + split2.b_a;
+								detail.push(to_obj(match_id, route_name, shift, truck_type,frequency,cd, a_b, a_c, b_c, b_a));
+								if(r1 == r2 && r2 == r3){
+									to_detail(templist, countlist, r1, r2, type, cd, a_b, a_c, b_c, b_a);
+									to_detail(templist, countlist, r2, r3, type, cd, a_b, a_c, b_c, b_a);
+								}else{
+									to_detail(templist, countlist, r1, r2, type, cd, a_b, a_c, 0, 0);
+									to_detail(templist, countlist, r2, r3, type, cd, 0, 0, b_c,b_a);
+								};
+								//to_detail(templist, countlist, r1, r2, type, cd, a_b, a_c, 0, 0);
+								//to_detail(templist, countlist, r2, r3, type, cd, 0, 0, b_c, b_a);
+								to_detail(templist, countlist, r1, c1, type, cd, a_b, a_c, 0, 0);
+								to_detail(templist, countlist, r2, c2, type, cd, 0, 0, b_c, b_a);
+								to_detail(templist, countlist, r3, r4, type, cd, 0, a_c, 0, 0);
+								to_detail(templist, countlist, r3, c3, type, cd, 0, a_c, 0, 0);
 							}
-						}
-					}else{
+						}else{ //A-B-C-B-A， 拆分为两个A-B-C
+							split1 = A_B_C(item.match_id,item.route_name, item.shift, item.type1, item.type2, item.type3, type, item.frequency, item.fk, item.model1, cd, load);
+							split2 = A_B_C(item.match_id,item.route_name, item.shift, item.type3, item.type4, item.type5, type, item.frequency, item.fk, item.model2, cd, load);
+							a_c = split1.a_c + split2.a_c;
+							a_b = split1.a_b + split2.a_b;
+							b_c = split1.b_c + split2.b_c;
+							b_a = split1.b_a + split2.b_a;
+							detail.push(to_obj(match_id, route_name, shift, truck_type,frequency,cd, a_b, a_c, b_c, b_a));
+							if(r1 == r2 && r2 == r3){
+									to_detail(templist, countlist, r1, r2, type, cd, a_b, a_c, b_c, b_a);
+									to_detail(templist, countlist, r2, r3, type, cd, a_b, a_c, b_c, b_a);
+								}else{
+									to_detail(templist, countlist, r1, r2, type, cd, a_b, a_c, 0, 0);
+									to_detail(templist, countlist, r2, r3, type, cd, 0, 0, b_c,b_a);
+								};
+							//to_detail(templist, countlist, r1, r2, type, cd, a_b, a_c, 0, 0);
+							//to_detail(templist, countlist, r2, r3, type, cd, 0, 0, b_c, b_a);
+							to_detail(templist, countlist, r1, c1, type, cd, a_b, a_c, 0, 0);
+							to_detail(templist, countlist, r2, c2, type, cd, 0, 0, b_c, b_a);
+							if(r3 == r4 && r4 == r5){
+									to_detail(templist, countlist, r3, r4, type, cd, a_b, a_c, b_c, b_a);
+									to_detail(templist, countlist, r4, r5, type, cd, a_b, a_c, b_c, b_a);
+								}else{
+									to_detail(templist, countlist, r3, r4, type, cd, a_b, a_c, 0, 0);
+									to_detail(templist, countlist, r4, r5, type, cd, 0, 0, b_c,b_a);
+								};
+							//to_detail(templist, countlist, r3, r4, type, cd, a_b, a_c, 0, 0);
+							//to_detail(templist, countlist, r4, r5, type, cd, 0, 0, b_c, b_a);
+							to_detail(templist, countlist, r3, c3, type, cd, a_b, a_c, 0, 0);
+							to_detail(templist, countlist, r4, c4, type, cd, 0, 0, b_c, b_a);
+							
+						};
+					}else{ //有经停网点的情况
+						var j = 1;
+						for(x in [r1, r2, r3, r4, r5]){
+							var i = 1;
+							if(x <> '0'){
+								var reg||'j' = x;
+								var nd||'j' = item.node||i;
+								j++;
+							};
+							i++;
+						};
 						
-					} 
-				})
+						if(item.center_cnt == 2 && nd1 <> nd2){
+							list = A_C(item.match_id,item.route_name, item.shift, type, item.frequency, cd, load);
+							detail.push(list);
+							to_detail(templist, countlist, reg1, reg2, type, cd, 0,list.a_c, 0, 0);
+							to_detail(templist, countlist, reg1, nd1, type, cd, 0, list.a_c, 0, 0);
+						}else if(item.center_cnt == 3 ){
+							if(nd1 == nd3 && nd1 <> nd3){
+								list = A_B_A(item.match_id,item.route_name, item.shift, type, item.frequency, cd, load);
+								detail.push(list);
+								if(reg1 == reg2 && reg2 == reg3){
+									to_detail(templist, countlist, reg1, reg2, type, cd, a_b, a_c, b_c, b_a);
+									to_detail(templist, countlist, reg2, reg3, type, cd, a_b, a_c, b_c, b_a);
+								}else{
+									to_detail(templist, countlist, reg1, reg2, type, cd, a_b, a_c, 0, 0);
+									to_detail(templist, countlist, reg2, reg3, type, cd, 0, 0, b_c,b_a);
+								};
+								//to_detail(templist, countlist, reg1, reg2, type, cd, list.a_b, list.a_c, 0, 0);
+								//to_detail(templist, countlist, reg2, reg3, type, cd, 0, 0, list.b_c, list.b_a);
+								to_detail(templist, countlist, reg1, nd1, type, cd, list.a_b, list.a_c, 0, 0);
+								to_detail(templist, countlist, reg2, nd2, type, cd, 0, 0, list.b_c, list.b_a);
+							}else{
+								list = A_B_C(item.match_id,item.route_name, item.shift, item.type1, item.type2, item.type3, type, item.frequency, item.fk, item.model1, cd, load);
+								detail.push(list);
+								if(reg1 == reg2 && reg2 == reg3){
+									to_detail(templist, countlist, reg1, reg2, type, cd, a_b, a_c, b_c, b_a);
+									to_detail(templist, countlist, reg2, reg3, type, cd, a_b, a_c, b_c, b_a);
+								}else{
+									to_detail(templist, countlist, reg1, reg2, type, cd, a_b, a_c, 0, 0);
+									to_detail(templist, countlist, reg2, reg3, type, cd, 0, 0, b_c,b_a);
+								};
+								//to_detail(templist, countlist, reg1, reg2, type, cd, list.a_b, list.a_c, 0, 0);
+								//to_detail(templist, countlist, reg2, reg3, type, cd, 0, 0, list.b_c, list.b_a);
+								to_detail(templist, countlist, reg1, nd1, type, cd, list.a_b, list.a_c, 0, 0);
+								to_detail(templist, countlist, reg2, nd2, type, cd, 0, 0, list.b_c, list.b_a);
+							};	
+						}else{
+						};	
+					};
+					
+				});
+				$("#grid").propertygrid({
+					columns: [[
+						{field: "match_id", width: "5%", resizable: false},
+						{field: "route_name", width: "20%", resizable: false},
+						{field: "shift", width: "5%", resizable: false},
+						{field: "truck_type", width: "10%", resizable: false},
+						{field: "frequency", width: "15%", resizable: false},
+						{field: "l_s", width: "5%", resizable: false},
+						{field: "a_b", width: "10%", resizable: false},
+						{field: "a_c", width: "10%", resizable: false},
+						{field: "b_c", width: "10%", resizable: false},
+						{field: "b_a", width: "10%", resizable: false}
+					]]
+				});
+				$("#grid").propertygrid("loadData", detail);
+				datatree(countlist);
+			};
+			
+			//A_C运力计算
+			function A_C(match_id,route_name, shift, truck_type, frequency, cd, load){
+				var temp;
+				temp = to_obj(match_id, route_name, shift, truck_type,frequency,cd, 0, load, 0, 0);
+				return temp;
+			};
+			
+			//A_B_A运力计算
+			function A_B_A(match_id,route_name, shift, truck_type, frequency,  cd, load){
+				var temp;
+				temp = to_obj(match_id, route_name, shift, truck_type,frequency,cd, load, 0, 0, load);
+				return temp;
 			}
 			
-			function A_B_C(list, schedule_id,route_name, shift, type1, type2, type3, truck_type, frequency, fk, model, cd, load){
+			//A_B_C运力计算
+			function A_B_C(match_id,route_name, shift, type1, type2, type3, truck_type, frequency, fk, model, cd, load){
+				var temp;
 				if(fk == "是"){
-					//list.push({"schedule_id":schedule_id, "route_name": route_name, "shift": shift, "frequency": frequency, "l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 0, "b_c": load, "b_a":0});
-					list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency, cd, load, 0, load, 0));	
+					//list.push({"match_id":match_id, "route_name": route_name, "shift": shift, "frequency": frequency, "l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 0, "b_c": load, "b_a":0});
+					temp = to_obj(match_id, route_name, shift, truck_type, frequency, cd, load, 0, load, 0);	
 				}else{
 					if(model == "全装全卸"){
-						//list.push({"schedule_id":schedule_id, "route_name": route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": load, "a_c": 0, "b_c": load, "b_a":0});
-						list.push(to_obj(schedule_id, route_name, shift, truck_type,frequency,  cd,load, 0, load, 0));
+						//list.push({"match_id":match_id, "route_name": route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": load, "a_c": 0, "b_c": load, "b_a":0});
+						temp = to_obj(match_id, route_name, shift, truck_type,frequency,  cd,load, 0, load, 0);
 					}else if(model == "先卸后装"){
-						//list.push({"schedule_id":schedule_id, "route_name": route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 0.5*load, "a_c": 0.5*load, "b_c": 0.5*load, "b_a":0});
-						list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency,  cd,  0.5*load, 0.5*load, 0.5*load, 0));
+						//list.push({"match_id":match_id, "route_name": route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 0.5*load, "a_c": 0.5*load, "b_c": 0.5*load, "b_a":0});
+						temp = to_obj(match_id, route_name, shift, truck_type, frequency,  cd,  0.5*load, 0.5*load, 0.5*load, 0);
 					}else if(model == "只卸不装"){
 						if(type2 = "转运中心" && type3 = "转运中心"){
-							//list.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 0.5*load, "a_c": 0.5*load, "b_c": 0, "b_a":0});
-							list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency,  cd,  0.5*load, 0.5*load, 0, 0));
+							//list.push({"match_id":item.match_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 0.5*load, "a_c": 0.5*load, "b_c": 0, "b_a":0});
+							temp = to_obj(match_id, route_name, shift, truck_type, frequency,  cd,  0.5*load, 0.5*load, 0, 0);
 						}else if(type2 = "转运中心" && type3 = "集散中心"){
-							//list.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 2/3*load, "a_c": 1/3*load, "b_c": 0, "b_a":0});
-							list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency,  cd,  2/3*load, 1/3*load, 0, 0));
+							//list.push({"match_id":item.match_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 2/3*load, "a_c": 1/3*load, "b_c": 0, "b_a":0});
+							temp = to_obj(match_id, route_name, shift, truck_type, frequency,  cd,  2/3*load, 1/3*load, 0, 0);
 						}else{
-							//list.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 1/3*load, "a_c": 2/3*load, "b_c": 0, "b_a":0});
-							list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency,  cd,  1/3*load, 2/3*load, 0, 0));
+							//list.push({"match_id":item.match_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 1/3*load, "a_c": 2/3*load, "b_c": 0, "b_a":0});
+							temp = to_obj(match_id, route_name, shift, truck_type, frequency,  cd,  1/3*load, 2/3*load, 0, 0);
 						}
 					}else{
 						if(type1 = "转运中心" && type2 = "转运中心"){
-							//list.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 0.5*load, "b_c": 0.5*load, "b_a":0});
-							list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency,  cd,  0, 0.5*load, 0.5*load, 0));
+							//list.push({"match_id":item.match_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 0.5*load, "b_c": 0.5*load, "b_a":0});
+							temp = to_obj(match_id, route_name, shift, truck_type, frequency,  cd,  0, 0.5*load, 0.5*load, 0);
 						}else if(type1 = "转运中心" && type2 = "集散中心"){
-							//list.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 2/3*load, "b_c": 1/3*load, "b_a":0});
-							list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency,  cd,  0, 2/3*load, 1/3*load, 0));
+							//list.push({"match_id":item.match_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 2/3*load, "b_c": 1/3*load, "b_a":0});
+							temp = to_obj(match_id, route_name, shift, truck_type, frequency,  cd,  0, 2/3*load, 1/3*load, 0);
 						}else{
-							//list.push({"schedule_id":item.schedule_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 1/3*load, "b_c": 2/3*load, "b_a":0});
-							list.push(to_obj(schedule_id, route_name, shift, truck_type, frequency,  cd,  0, 1/3*load, 2/3*load, 0));
+							//list.push({"match_id":item.match_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 1/3*load, "b_c": 2/3*load, "b_a":0});
+							temp = to_obj(match_id, route_name, shift, truck_type, frequency,  cd,  0, 1/3*load, 2/3*load, 0);
 						}
 					};
+					return temp;
 				};
 			};
 			
-			function to_obj(schedule_id, route_name, shift, truck_type,frequency,cd, a_b, a_c, b_c, b_a){
+			//返回对象
+			function to_obj(match_id, route_name, shift, truck_type,frequency,cd, a_b, a_c, b_c, b_a){
 				var obj = {};
-				obj = {"schedule_id":schedule_id, "route_name": route_name, "shift": shift, "truck_type": truck_type,"frequency": frequency, "l_s": cd,  "a_b": a_b, "a_c": a_c, "b_c": b_c, "b_a":b_a};
+				obj = {"match_id":match_id, "route_name": route_name, "shift": shift, "truck_type": truck_type,"frequency": frequency, "l_s": cd,  "a_b": a_b, "a_c": a_c, "b_c": b_c, "b_a":b_a};
 				return obj;
 			};
+			
+			//产生原始数据
+			function to_detail(templist, countlist, linelist, param1, param2, type, cd, a_b, a_c, b_c, b_a){
+				var index = param1 + param2 + type;
+				if(!templist.contains(index)){
+					countlist[param1+"_"+param2] = new Array();
+					countlist[param1+"_"+param2][type] = new Array();
+					if(cd == "长线"){
+						var countlist[param1+"_"+param2][type]["l_capacity"] = 0;
+						var countlist[param1+"_"+param2][type]["l_line"] = 1;
+						countlist[param1+"_"+param2][type]["l_capacity"] = a_b+a_c+b_c+b_a;
+					}else if(cd == "短线"){
+						var countlist[param1+"_"+param2][type]["s_capacity"] = 0;
+						var countlist[param1+"_"+param2][type]["s_line"] = 1;
+						countlist[param1+"_"+param2][type]["s_capacity"] = a_b+a_c+b_c+b_a;
+					}else{
+					};	
+				}else{
+					if(cd == "长线"){
+						countlist[param1+"_"+param2][type]["l_capacity"] += (a_b+a_c+b_c+b_a);
+						countlist[param1+"_"+param2][type]["l_line"] += 1;
+					}else if( cd = "短线"){
+						countlist[param1+"_"+param2][type]["s_capacity"] += (a_b+a_c+b_c+b_a);
+						countlist[param1+"_"+param2][type]["s_line"] += 1;
+					}else{
+					};
+				};	
+			};
+			
+			
+			
+			function datatree(countlist){
+				var json1 = {}, rows1 = [], footer1 = [];//按区域
+				var json2 = {}, rows2 = [], footer2 = []; //按分拨
+				var reglist = [], centerlist = [], typelist = [], routelist = [];
+				var regid = {}, centerid = {}, typeid = {};
+				var k = 1, s = 1, t = 1, m = 1;
+				var route_out = [], area_in = [], area_out = [], reg_t =[], all1 = [];//按区域汇总逐级统计变量
+				var center_a = [], reg_a = [], all2 = []; //按分拨汇总逐级统计变量
+				var center_to_reg = [];//分拨和区域的从属关系
+				
+				
+				//id初始化
+				$.each(countlist, function(i, item){
+					var reg = split(item[0],"_")[0];
+					var reg_or_center = split(item[0],"_")[1];
+					if(reg_or_center.substr(reg_or_center.length-3) <> '区域'){
+						var center = reg_or_center;
+					}else if(reg <> reg_or_center){
+						var route = reg + '→' + reg_or_center;
+					}else{};
+					
+					if(!reglist.contains(reg)){
+						var center_to_reg[reg] = []; //center放到对应的reg中
+						reglist.push(reg);
+						regid[reg] = k;
+						area_in[reg] = new Array();
+						area_out[reg] = new Array();
+						reg_t[reg] = new Array();
+						reg_a[reg] = new Array();
+						area_in[reg]["l_capacity"] = 0;
+						area_in[reg]["s_capacity"] = 0;
+						area_in[reg]["l_line"] = 0;
+						area_in[reg]["s_line"] = 0;
+						area_out[reg]["l_capacity"] = 0;
+						area_out[reg]["s_capacity"] = 0;
+						area_out[reg]["l_line"] = 0;
+						area_out[reg]["s_line"] = 0;
+						reg_t[reg]["l_capacity"] = 0;
+						reg_t[reg]["s_capacity"] = 0;
+						reg_t[reg]["l_line"] = 0;
+						reg_t[reg]["s_line"] = 0;
+						reg_a[reg]["l_capacity"] = 0;
+						reg_a[reg]["s_capacity"] = 0;
+						reg_a[reg]["l_line"] = 0;
+						reg_a[reg]["s_line"] = 0;
+						k++;
+					};
+					if(!centerlist.contains(center)){
+						centerlist.push(center);
+						centerid[center] = s;
+						center_a[center] = new Array();
+						center_a[center]["l_capacity"] = 0;
+						center_a[center]["s_capacity"] = 0;
+						center_a[center]["l_line"] = 0;
+						center_a[center]["s_line"] = 0;
+						s++;
+					};
+					if(!typelist.contains(item[0][0])){ //type编号
+						typelist.push(item[0][0]);
+						typeid[item[0][0]] = t;
+						t++;
+					};
+					if(!routelist.contains(route)){
+							routelist.push(route);
+							routeid[route] = m;
+							route_out[route] = new Array();
+							route_out[route]["l_capacity"] = 0;
+							route_out[route]["s_capacity"] = 0;
+							route_out[route]["l_line"] = 0;
+							route_out[route]["s_line"] = 0;
+							m++;
+						};
+					
+				});
+				
+				
+				$.each(countlist, function(i, item){
+					var reg = split(item[0],"_")[0] + "区域";
+					var reg_or_center = split(item[0],"_")[1];
+					var type = item[0][0];
+					var l_capacity = item[0][0]["l_capacity"];
+					var l_line = item[0][0]["l_line"];
+					var s_capacity = item[0][0]["s_capacity"];
+					var s_line = item[0][0]["s_line"];
+					if(reg_or_center.substr(reg_or_center.length-3) <> '区域'){
+						var center = reg_or_center;
+						rows2.push({"id":regid[reg]*10000+centerid[center]*10+typeid[type], "_parentId":regid[reg]*1000+centerid[center], "name":type, "l_capacity": l_capacity, "s_capacity": s_capacity, "capacity": l_capacity + s_capacity, "l_line":l_line, "s_line":s_line, "line":l_line + s_line});
+						center_a[center]["l_capacity"] += l_capacity;
+						center_a[center]["s_capacity"] += s_capacity;
+						center_a[center]["l_line"] += l_line;
+						center_a[center]["s_line"] += s_line;
+						if(!center_to_reg[reg].contains(center)){
+							center_to_reg[reg].push(center);
+						};
+					}else{
+						var to_reg = reg_or_center;
+						var route = reg + "→" + to_reg;
+						if(reg == to_reg){
+							rows1.push({"id":regid[reg]*100+10+typeid[type], "_parentId":regid[reg]*10+1, "name":type, "l_capacity":l_capacity,"s_capacity":s_capacity, "capacity":l_capacity+s_capacity,"l_line":l_line, "s_line":s_line,"line":l_line+s_line});
+							area_in[reg]["l_capacity"] += l_capacity;
+							area_in[reg]["s_capacity"] += s_capacity;
+							area_in[reg]["l_line"] += l_line;
+							area_in[reg]["s_line"] += s_line;
+						}else{
+							rows1.push({"id":regid[reg]*10000+2000+routeid[route]*10+typeid[type], "_parentId":regid[reg]*1000+200+routeid[route], "name":type, "l_capacity":l_capacity,"s_capacity":s_capacity, "capacity":l_capacity+s_capacity,"l_line":l_line, "s_line":s_line,"line":l_line+s_line});
+							route_out[route]["l_capacity"] += l_capacity;
+							route_out[route]["s_capacity"] += s_capacity;
+							route_out[route]["l_line"] += l_line;
+							route_out[route]["s_line"] += s_line;
+						};
+						
+					}			
+				});
+				
+				//区域外出发区域到目的区域
+				for(var key in route_out){
+					var reg = key.substring(0,4);
+					rows1.push({"id":regid[reg]*1000+200+routeid[key], "_parentId":regid[reg]*100+20, "name":key, "l_capacity":route_out[key]["l_capacit"], "s_capacity":route_out[key]["s_capacit"],"l_line":route_out[key]["l_line"], "s_line":route_out[key]["s_line"],"line":route_out[key]["l_line"]+route_out[key]["s_line"], "state":"closed"});
+					area_out[reg]["l_capacity"] += route_out[key]["l_capacity"];
+					area_out[reg]["s_capacity"] += route_out[key]["s_capacity"];
+					area_out[reg]["l_line"] +=route_out[key]["l_line"];
+					area_out[reg]["s_line"] +=route_out[key]["s_line"];
+				}
+				//区域内外
+				for(var key in area_in){
+						rows1.push({"id":regid[key]*10+1, "_parentId":regid[key], "name":"区域内", "l_capacity":area_in[key]["l_capacity"], "s_capacity":area_in[key]["s_capacity"],"capacity":area_in[key]["l_capacity"]+area_in[key]["s_capacity"],"l_line":area_in[key]["l_line"], "s_line":area_in[key]["s_line"], "line":area_in[key]["l_line"]+area_in[key]["s_line"],"state":"closed"});
+						rows1.push({"id":regid[key]*100+20, "_parentId":regid[key], "name":"区域外", "l_capacity":area_out[key]["l_capacity"], "s_capacity":area_out[key]["s_capacity"], "capacity":area_out[key]["l_capacity"]+area_out[key]["s_capacity"], "l_line":area_out[key]["l_line"], "s_line":area_out[key]["s_line"], "line":area_out[key]["l_line"]+area_out[key]["s_line"], "state":"closed"});
+						reg_t[key]["l_capacity"] += area_in[key]["l_capacity"] + area_out[key]["l_capacity"];
+						reg_t[key]["s_capacity"] += area_in[key]["s_capacity"] + area_out[key]["s_capacity"];
+						reg_t[key]["l_line"] += area_in[key]["l_line"] + area_out[key]["l_line"];
+						reg_t[key]["s_line"] += area_in[key]["s_line"] + area_out[key]["s_line"];
+						
+				};
+				//第一层，每个区域累加
+				for(var key in reg_t){
+					rows1.push({"id":regid[key],"name":key, "l_capacity":reg_t[key]["l_capacity"], "s_capacity":reg_t[key]["s_capacity"], "capacity":reg_t[key]["l_capacity"]+reg_t[key]["s_capacity"],"l_line":reg_t[key]["l_line"],"s_line":reg_t[key]["s_line"],"line":reg_t[key]["l_line"] +reg_t[key]["s_line"], "state":"closed"});
+					all1["l_capacity"] += reg_t[key]["l_capacity"];
+					all1["s_capacity"] += reg_t[key]["l_capacity"];
+					all1["l_line"] += reg_t[key]["l_line"];
+					all1["s_line"] += reg_t[key]["s_line"];
+				};
+				
+				
+				footer1.push({"name": "全网", "l_capacity": all1["l_capacity"],"s_capacity": all1["s_capacity"], "capacity": all1["l_capacity"]+all1["s_capacity"],"l_line": all1["l_line"],"s_line": all1["s_line"],"line": all1["l_line"]+all1["s_line"]});
+				json1["rows"]= rows1;
+				json1["footer"] = footer1;
+				json1["total"] = rows1.length;
+				
+			$("#tree1").treegrid({
+				idField:'id',
+				treeField:'name',
+				width: 700,
+				height: 500,
+				//rownumbers: true,
+				showFooter: true,
+				animate: true,
+				data: json1
+			})
+			
+			for(var key in center_to_reg){
+				for(var center in center_reg[key]){
+					rows2.push({"id":regid[key]*1000+centerid[center], "_parentId":regid[key], "name":center, "l_capacity": center_a[center]["l_capacity"],"s_capacity": center_a[center]["s_capacity"],"capacity": center_a[center]["l_capacity"]+center_a[center]["s_capacity"], "l_line":center_a[center]["l_line"],"s_line":center_a[center]["s_line"],"line":center_a[center]["l_line"]+center_a[center]["s_line"], "state": "closed"});
+					reg_a[key]["l_capacity"] += center_a[center]["l_capacity"];
+					reg_a[key]["s_capacity"] += center_a[center]["s_capacity"];
+					reg_a[key]["l_line"] += center_a[center]["l_line"];
+					reg_a[key]["s_line"] += center_a[center]["s_line"];
+				};
+				rows2.push({"id":regid[key], "name":key, "l_capacity": reg_a[key]["l_capacity"], "s_capacity": reg_a[key]["s_capacity"],"capacity": reg_a[key]["l_capacity"] + reg_a[key]["s_capacity"], "l_line":reg_a[key]["l_line"], "s_line":reg_a[key]["s_line"], "line":reg_a[key]["l_line"]+reg_a[key]["s_line"],"state": "closed"});
+				all2["l_capacity"] += reg_a[key]["l_capacity"];
+				all2["s_capacity"] += reg_a[key]["s_capacity"];
+				all2["l_line"] += reg_a[key]["l_line"];
+				all2["s_line"] += reg_a[key]["s_line"];
+			};
+			
+			footer2.push({"name": "全网", "l_capacity": all2["l_capacity"], "s_capacity": all2["s_capacity"],"capacity": all2["l_capacity"]+all2["s_capacity"],"l_line": all2["l_line"], "s_line": all2["s_line"], "line": all2["l_line"]+all2["s_line"]});
+			json2["rows"]= rows2;
+			json2["footer"] = footer2;
+			json2["total"] = rows2.length;
+			
+			$("#tree2").treegrid({
+				idField:'id',
+				treeField:'name',
+				width: 700,
+				height: 500,
+				//rownumbers: true,
+				showFooter: true,
+				animate: true,
+				data: json2
+			});	
+		};
 			
 		</script>
 	</head>
@@ -151,7 +546,7 @@
 					<table id = "grid" >
 						<!--<thead frozen = 'true'>
 							<tr>
-								<th data-options = "field: 'schedule_id'">班车编号</th>
+								<th data-options = "field: 'match_id'">班车编号</th>
 								<th data-options = "field: 'route_name'">线路</th>
 								<th data-options = "field: 'shift'">班次</th>
 								<th data-options = "field: 'l_s'">长短线</th>
