@@ -2,11 +2,14 @@
 <html>
 	<head>
 		<meta http-equiv = "X-UA-Compatible" content = "IE = edge" charset = "UTF-8"/> 
-		<title>TEST</title>
+		<title>LoadCapacityDetail</title>
 		<!-- <link rel = "stylesheet" href = "../src/main/webapp/pages/css/wanma.css"/> -->
 		<link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/default/easyui.css"/>
 		<!-- <link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/icon.css"/> -->
-		
+		<style>
+			html {height: 100%;
+				width: 100%}
+		</style>
 		<script type = "text/javascript" src = "../src/main/webapp/tools/tssJS/tssJS.all.js"></script>
 		
 		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.min.js"></script>
@@ -20,11 +23,11 @@
 		<script type = "text/javascript">
 			var data;
 			
-			var DATA_URL = "http://10.45.10.216:8080/tss/data/json/2150";
+			var DATA_URL = "http://10.9.44.64:8080/tss/data/json/2200";
 			
 			
 			var method = "POST";
-			var param = {"param1": "-1" };
+			var param = {};
 			
 
 			
@@ -44,13 +47,12 @@
 			});
 
 			function show(data){
-				var detail = [], inlist = [], outlist = [], templist = [], countlist = [];
+				var detail = [], inlist = [], outlist = [], templist = [], countobj = {};
 				var a_c = 0, a_b = 0, b_c = 0, b_a = 0; 
 				var list, split1, split2;
 				
-				var type = item.truck_type, cd = item.cd;
 				$.each(data, function(i, item){
-					var load = item.load;
+					var load = item.load_capacity, type = item.truck_type, cd = item.cd;
 					var r1 = item.reg1, r2 = item.reg2, r3 = item.reg3, r4 = item.reg4, r5 = item.reg5;
 					var c1 = item.node1, c2 = item.node2, c3 = item.node3, c4 = item.node4, c5 = item.node5;
 					if(item.site_cnt == item.center_cnt){ //没有经停网点
@@ -59,77 +61,89 @@
 							list = A_C(item.match_id,item.route_name, item.shift, type, item.frequency,  cd, load);
 							detail.push(list);
 							//按区域汇总源数据统计
-							to_detail(templist, countlist, r1, r2, type, cd, 0,list.a_c, 0, 0);
+							to_detail(templist, countobj, r1, r2, type, cd, 0,list.a_c, 0, 0);
 							/*
 							if(r1 == r2){
 								
 								if(!templist.contains(r1+r2+type+cd)){
-									var countlist[r1+r2][type][cd] = 0;
-									countlist[r1+r2][type][cd] = item.a_c;
+									var countobj[r1+r2][type][cd] = 0;
+									countobj[r1+r2][type][cd] = item.a_c;
 								}else{
-									countlist[r1+r2][type][cd] += item.a_c;
+									countobj[r1+r2][type][cd] += item.a_c;
 								};
 							}else{
 								if(!templist.contains(r1+r2+type+cd)){
-									var countlist[r1+r2][type][cd] = 0;
-									countlist[r1+r2][type][cd] = item.a_c;
+									var countobj[r1+r2][type][cd] = 0;
+									countobj[r1+r2][type][cd] = item.a_c;
 								}else{
-									countlist[r1+r2][type][cd] += item.a_c;
+									countobj[r1+r2][type][cd] += item.a_c;
 								};
 							};*/
 							
 							//按分拨汇总源数据统计
-							to_detail(templist, countlist, r1, c1, type, cd, 0, list.a_c, 0, 0);
+							to_detail(templist, countobj, r1, c1, type, cd, 0, list.a_c, 0, 0);
 							/*
 							if(!templist.contains(r1+c1+type+cd)){
-								var countlist[r1+c1][type][cd] = 0;
-								countlist[r1+c1][type][cd] = item.a_c;
+								var countobj[r1+c1][type][cd] = 0;
+								countobj[r1+c1][type][cd] = item.a_c;
 							}else{
-								countlist[r1+c1][type][cd] += item.a_c;
+								countobj[r1+c1][type][cd] += item.a_c;
 							};*/
 							
 						}else if(item.site_cnt == 3){ 
-							if(item.node1 == item.node3 && item.node1 <> item.node2){//A_B_A
+							if(item.node1 == item.node3 && item.node1 != item.node2){//A_B_A
 								//detail.push({"match_id":item.match_id, "route_name": item.route_name, "shift": item.shift, "truck_type": type,"frequency": item.frequency, "l_s": cd,  "a_b": load, "a_c": 0, "b_c": 0, "b_a":load});
 								list = A_B_A(item.match_id,item.route_name, item.shift, type, item.frequency, cd, load);
 								detail.push(list);
+								A_B_C_count(templist, countobj, r1, r2, r3,type, cd, a_b, a_c, b_c, b_a);
+								/*
 								if(r1 == r2 && r2 == r3){
-									to_detail(templist, countlist, r1, r2, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
-									to_detail(templist, countlist, r2, r3, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
+									to_detail(templist, countobj, r1, r2, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
 								}else{
-									to_detail(templist, countlist, r1, r2, type, cd, list.a_b, list.a_c, 0, 0);
-									to_detail(templist, countlist, r2, r3, type, cd, 0, 0, list.b_c, list.b_a);
-								};
-								to_detail(templist, countlist, r1, c1, type, cd, list.a_b, list.a_c, 0, 0);
-								to_detail(templist, countlist, r2, c2, type, cd, 0, 0, list.b_c, list.b_a);
+									to_detail(templist, countobj, r1, r2, type, cd, list.a_b, list.a_c, 0, 0);
+									to_detail(templist, countobj, r2, r3, type, cd, 0, 0, list.b_c, list.b_a);
+								};*/
+								to_detail(templist, countobj, r1, c1, type, cd, list.a_b, list.a_c, 0, 0);
+								to_detail(templist, countobj, r2, c2, type, cd, 0, 0, list.b_c, list.b_a);
 							}else{ //A_B_C
 								list = A_B_C(item.match_id,item.route_name, item.shift, item.type1, item.type2, item.type3, type, item.frequency, item.fk, item.model1, cd, load);
 								detail.push(list);
+								A_B_C_count(templist, countobj, r1, r2, r3,type, cd, a_b, a_c, b_c, b_a);
+								/*
 								if(r1 == r2 && r2 == r3){
-									to_detail(templist, countlist, r1, r2, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
-									to_detail(templist, countlist, r2, r3, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
+									to_detail(templist, countobj, r1, r2, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
 								}else{
-									to_detail(templist, countlist, r1, r2, type, cd, list.a_b, list.a_c, 0, 0);
-									to_detail(templist, countlist, r2, r3, type, cd, 0, 0, list.b_c, list.b_a);
-								};
-								to_detail(templist, countlist, r1, c1, type, cd, list.a_b, list.a_c, 0, 0);
-								to_detail(templist, countlist, r2, c2, type, cd, 0, 0, list.b_c, list.b_a);
+									if(r1 != r2){
+										to_detail(templist, countobj, r1, r2, type, cd, list.a_b, list.a_c, 0, 0);
+									};
+									if(r2 != r3){
+										to_detail(templist, countobj, r2, r3, type, cd, 0, 0, list.b_c, list.b_a);
+									}
+									
+								};*/
+								to_detail(templist, countobj, r1, c1, type, cd, list.a_b, list.a_c, 0, 0);
+								to_detail(templist, countobj, r2, c2, type, cd, 0, 0, list.b_c, list.b_a);
 							};
 						}else if(item.site_cnt == 4){ //A-B-C-D的情况
 							if(item.fk == '是'){
 								list = A_B_C(item.match_id,item.route_name, item.shift, item.type2, item.type3, item.type4, type, item.frequency, item.fk, item.model1, cd, load);
 								detail.push(list);
+								A_B_C_count(templist, countobj, r2, r3, r4,type, cd, a_b, a_c, b_c, b_a);
+								/*
 								if(r2 == r3 && r3 == r4){
-									to_detail(templist, countlist, r2, r3, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
-									to_detail(templist, countlist, r3, r4, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
+									to_detail(templist, countobj, r2, r3, type, cd, list.a_b, list.a_c, list.b_c, list.b_a);
 								}else{
-									to_detail(templist, countlist, r2, r3, type, cd, list.a_b, list.a_c, 0, 0);
-									to_detail(templist, countlist, r3, r4, type, cd, 0, 0, list.b_c, list.b_a);
-								};
-								//to_detail(templist, countlist, r2, r3, type, cd, list.a_b, list.a_c, 0, 0);
-								//to_detail(templist, countlist, r3, r4, type, cd, 0, 0, list.b_c, list.b_a);
-								to_detail(templist, countlist, r2, c2, type, cd, list.a_b, list.a_c, 0, 0);
-								to_detail(templist, countlist, r3, c3, type, cd, 0, 0, list.b_c, list.b_a);
+									if(r2 != r3){
+										to_detail(templist, countobj, r2, r3, type, cd, list.a_b, list.a_c, 0, 0);
+									};
+									if(r3 != r4){
+										to_detail(templist, countobj, r3, r4, type, cd, 0, 0, list.b_c, list.b_a);
+									};
+								};*/
+								//to_detail(templist, countobj, r2, r3, type, cd, list.a_b, list.a_c, 0, 0);
+								//to_detail(templist, countobj, r3, r4, type, cd, 0, 0, list.b_c, list.b_a);
+								to_detail(templist, countobj, r2, c2, type, cd, list.a_b, list.a_c, 0, 0);
+								to_detail(templist, countobj, r3, c3, type, cd, 0, 0, list.b_c, list.b_a);
 							}else{
 								//拆分为A-B-C和A-C
 								split1 = A_B_C(item.match_id,item.route_name, item.shift, item.type1, item.type2, item.type3, type, item.frequency, item.fk, item.model1, cd, load);
@@ -138,20 +152,25 @@
 								a_b = split1.a_b + split2.a_b;
 								b_c = split1.b_c + split2.b_c;
 								b_a = split1.b_a + split2.b_a;
-								detail.push(to_obj(match_id, route_name, shift, truck_type,frequency,cd, a_b, a_c, b_c, b_a));
+								detail.push(to_obj(item.match_id,item.route_name, item.shift, type, item.frequency, cd, a_b, a_c, b_c, b_a));
+								A_B_C_count(templist, countobj, r1, r2, r3,type, cd, a_b, a_c, b_c, b_a);
+								/*
 								if(r1 == r2 && r2 == r3){
-									to_detail(templist, countlist, r1, r2, type, cd, a_b, a_c, b_c, b_a);
-									to_detail(templist, countlist, r2, r3, type, cd, a_b, a_c, b_c, b_a);
+									to_detail(templist, countobj, r1, r2, type, cd, a_b, a_c, b_c, b_a);
 								}else{
-									to_detail(templist, countlist, r1, r2, type, cd, a_b, a_c, 0, 0);
-									to_detail(templist, countlist, r2, r3, type, cd, 0, 0, b_c,b_a);
-								};
-								//to_detail(templist, countlist, r1, r2, type, cd, a_b, a_c, 0, 0);
-								//to_detail(templist, countlist, r2, r3, type, cd, 0, 0, b_c, b_a);
-								to_detail(templist, countlist, r1, c1, type, cd, a_b, a_c, 0, 0);
-								to_detail(templist, countlist, r2, c2, type, cd, 0, 0, b_c, b_a);
-								to_detail(templist, countlist, r3, r4, type, cd, 0, a_c, 0, 0);
-								to_detail(templist, countlist, r3, c3, type, cd, 0, a_c, 0, 0);
+									if(r1 != r2){
+										to_detail(templist, countobj, r1, r2, type, cd, a_b, a_c, 0, 0);
+									};
+									if(r2 != r3){
+										to_detail(templist, countobj, r2, r3, type, cd, 0, 0, b_c,b_a);
+									}
+								};*/
+								//to_detail(templist, countobj, r1, r2, type, cd, a_b, a_c, 0, 0);
+								//to_detail(templist, countobj, r2, r3, type, cd, 0, 0, b_c, b_a);
+								to_detail(templist, countobj, r1, c1, type, cd, a_b, a_c, 0, 0);
+								to_detail(templist, countobj, r2, c2, type, cd, 0, 0, b_c, b_a);
+								to_detail(templist, countobj, r3, c3, type, cd, 0, a_c, 0, 0);
+								to_detail(templist, countobj, r4, c4, type, cd, 0, a_c, 0, 0);
 							}
 						}else{ //A-B-C-B-A， 拆分为两个A-B-C
 							split1 = A_B_C(item.match_id,item.route_name, item.shift, item.type1, item.type2, item.type3, type, item.frequency, item.fk, item.model1, cd, load);
@@ -160,83 +179,101 @@
 							a_b = split1.a_b + split2.a_b;
 							b_c = split1.b_c + split2.b_c;
 							b_a = split1.b_a + split2.b_a;
-							detail.push(to_obj(match_id, route_name, shift, truck_type,frequency,cd, a_b, a_c, b_c, b_a));
+							detail.push(to_obj(item.match_id,item.route_name, item.shift, type, item.frequency, cd, a_b, a_c, b_c, b_a));
+							A_B_C_count(templist, countobj, r1, r2, r3,type, cd, a_b, a_c, b_c, b_a);
+							/*
 							if(r1 == r2 && r2 == r3){
-									to_detail(templist, countlist, r1, r2, type, cd, a_b, a_c, b_c, b_a);
-									to_detail(templist, countlist, r2, r3, type, cd, a_b, a_c, b_c, b_a);
+									to_detail(templist, countobj, r1, r2, type, cd, a_b, a_c, b_c, b_a);
+									to_detail(templist, countobj, r2, r3, type, cd, a_b, a_c, b_c, b_a);
 								}else{
-									to_detail(templist, countlist, r1, r2, type, cd, a_b, a_c, 0, 0);
-									to_detail(templist, countlist, r2, r3, type, cd, 0, 0, b_c,b_a);
-								};
-							//to_detail(templist, countlist, r1, r2, type, cd, a_b, a_c, 0, 0);
-							//to_detail(templist, countlist, r2, r3, type, cd, 0, 0, b_c, b_a);
-							to_detail(templist, countlist, r1, c1, type, cd, a_b, a_c, 0, 0);
-							to_detail(templist, countlist, r2, c2, type, cd, 0, 0, b_c, b_a);
+									if(r1 != r2){
+										to_detail(templist, countobj, r1, r2, type, cd, a_b, a_c, 0, 0);
+									};
+									if(r2 != r3){
+										to_detail(templist, countobj, r2, r3, type, cd, 0, 0, b_c,b_a);
+									}
+								};*/
+							//to_detail(templist, countobj, r1, r2, type, cd, a_b, a_c, 0, 0);
+							//to_detail(templist, countobj, r2, r3, type, cd, 0, 0, b_c, b_a);
+							to_detail(templist, countobj, r1, c1, type, cd, a_b, a_c, 0, 0);
+							to_detail(templist, countobj, r2, c2, type, cd, 0, 0, b_c, b_a);
+							A_B_C_count(templist, countobj, r3, r4, r5,type, cd, a_b, a_c, b_c, b_a);
+							/*
 							if(r3 == r4 && r4 == r5){
-									to_detail(templist, countlist, r3, r4, type, cd, a_b, a_c, b_c, b_a);
-									to_detail(templist, countlist, r4, r5, type, cd, a_b, a_c, b_c, b_a);
+									to_detail(templist, countobj, r3, r4, type, cd, a_b, a_c, b_c, b_a);
 								}else{
-									to_detail(templist, countlist, r3, r4, type, cd, a_b, a_c, 0, 0);
-									to_detail(templist, countlist, r4, r5, type, cd, 0, 0, b_c,b_a);
-								};
-							//to_detail(templist, countlist, r3, r4, type, cd, a_b, a_c, 0, 0);
-							//to_detail(templist, countlist, r4, r5, type, cd, 0, 0, b_c, b_a);
-							to_detail(templist, countlist, r3, c3, type, cd, a_b, a_c, 0, 0);
-							to_detail(templist, countlist, r4, c4, type, cd, 0, 0, b_c, b_a);
+									if(r3 != r4){
+										to_detail(templist, countobj, r3, r4, type, cd, a_b, a_c, 0, 0);
+									};
+									if(r4 != r5){
+										to_detail(templist, countobj, r4, r5, type, cd, 0, 0, b_c,b_a);
+									};
+									
+								};*/
+							//to_detail(templist, countobj, r3, r4, type, cd, a_b, a_c, 0, 0);
+							//to_detail(templist, countobj, r4, r5, type, cd, 0, 0, b_c, b_a);
+							to_detail(templist, countobj, r3, c3, type, cd, a_b, a_c, 0, 0);
+							to_detail(templist, countobj, r4, c4, type, cd, 0, 0, b_c, b_a);
 							
 						};
 					}else{ //有经停网点的情况
 						var j = 1;
-						for(x in [r1, r2, r3, r4, r5]){
-							var i = 1;
-							if(x <> '0'){
-								var reg||'j' = x;
-								var nd||'j' = item.node||i;
+						var sitelist = [r1, r2, r3, r4, r5];//5个网点区域（包括为空的）
+						for(var i = 0; i < sitelist.length; i++){
+							if(sitelist[i] != "0"){
+								eval("var site"+j+"="+"'"+sitelist[i]+"'")
+								eval("var nd"+j+"="+"'"+eval("item.node"+(i+1))+"'");
 								j++;
+							}else{
+								continue;
 							};
-							i++;
 						};
 						
-						if(item.center_cnt == 2 && nd1 <> nd2){
+						
+						if(item.center_cnt == 2 && nd1 != nd2){
 							list = A_C(item.match_id,item.route_name, item.shift, type, item.frequency, cd, load);
 							detail.push(list);
-							to_detail(templist, countlist, reg1, reg2, type, cd, 0,list.a_c, 0, 0);
-							to_detail(templist, countlist, reg1, nd1, type, cd, 0, list.a_c, 0, 0);
+							to_detail(templist, countobj, site1, site2, type, cd, 0,list.a_c, 0, 0);
+							to_detail(templist, countobj, site1, nd1, type, cd, 0, list.a_c, 0, 0);
 						}else if(item.center_cnt == 3 ){
-							if(nd1 == nd3 && nd1 <> nd3){
+							if(nd1 == nd3 && nd1 != nd3){
 								list = A_B_A(item.match_id,item.route_name, item.shift, type, item.frequency, cd, load);
 								detail.push(list);
-								if(reg1 == reg2 && reg2 == reg3){
-									to_detail(templist, countlist, reg1, reg2, type, cd, a_b, a_c, b_c, b_a);
-									to_detail(templist, countlist, reg2, reg3, type, cd, a_b, a_c, b_c, b_a);
+								/*
+								if(site1 == site2 && site2 == site3){
+									to_detail(templist, countobj, site1, site2, type, cd, a_b, a_c, b_c, b_a);
 								}else{
-									to_detail(templist, countlist, reg1, reg2, type, cd, a_b, a_c, 0, 0);
-									to_detail(templist, countlist, reg2, reg3, type, cd, 0, 0, b_c,b_a);
-								};
-								//to_detail(templist, countlist, reg1, reg2, type, cd, list.a_b, list.a_c, 0, 0);
-								//to_detail(templist, countlist, reg2, reg3, type, cd, 0, 0, list.b_c, list.b_a);
-								to_detail(templist, countlist, reg1, nd1, type, cd, list.a_b, list.a_c, 0, 0);
-								to_detail(templist, countlist, reg2, nd2, type, cd, 0, 0, list.b_c, list.b_a);
+									to_detail(templist, countobj, site1, site2, type, cd, a_b, a_c, 0, 0);
+									to_detail(templist, countobj, site2, site3, type, cd, 0, 0, b_c,b_a);
+								};*/
+								A_B_C_count(templist, countobj, site1, site2, site3,type, cd, a_b, a_c, b_c, b_a);
+								//to_detail(templist, countobj, reg1, reg2, type, cd, list.a_b, list.a_c, 0, 0);
+								//to_detail(templist, countobj, reg2, reg3, type, cd, 0, 0, list.b_c, list.b_a);
+								to_detail(templist, countobj, site1, nd1, type, cd, list.a_b, list.a_c, 0, 0);
+								to_detail(templist, countobj, site2, nd2, type, cd, 0, 0, list.b_c, list.b_a);
 							}else{
 								list = A_B_C(item.match_id,item.route_name, item.shift, item.type1, item.type2, item.type3, type, item.frequency, item.fk, item.model1, cd, load);
 								detail.push(list);
+								A_B_C_count(templist, countobj, site1, site2, site3,type, cd, a_b, a_c, b_c, b_a);
+								/*
 								if(reg1 == reg2 && reg2 == reg3){
-									to_detail(templist, countlist, reg1, reg2, type, cd, a_b, a_c, b_c, b_a);
-									to_detail(templist, countlist, reg2, reg3, type, cd, a_b, a_c, b_c, b_a);
+									to_detail(templist, countobj, reg1, reg2, type, cd, a_b, a_c, b_c, b_a);
+									to_detail(templist, countobj, reg2, reg3, type, cd, a_b, a_c, b_c, b_a);
 								}else{
-									to_detail(templist, countlist, reg1, reg2, type, cd, a_b, a_c, 0, 0);
-									to_detail(templist, countlist, reg2, reg3, type, cd, 0, 0, b_c,b_a);
-								};
-								//to_detail(templist, countlist, reg1, reg2, type, cd, list.a_b, list.a_c, 0, 0);
-								//to_detail(templist, countlist, reg2, reg3, type, cd, 0, 0, list.b_c, list.b_a);
-								to_detail(templist, countlist, reg1, nd1, type, cd, list.a_b, list.a_c, 0, 0);
-								to_detail(templist, countlist, reg2, nd2, type, cd, 0, 0, list.b_c, list.b_a);
+									to_detail(templist, countobj, reg1, reg2, type, cd, a_b, a_c, 0, 0);
+									to_detail(templist, countobj, reg2, reg3, type, cd, 0, 0, b_c,b_a);
+								};*/
+								//to_detail(templist, countobj, reg1, reg2, type, cd, list.a_b, list.a_c, 0, 0);
+								//to_detail(templist, countobj, reg2, reg3, type, cd, 0, 0, list.b_c, list.b_a);
+								to_detail(templist, countobj, site1, nd1, type, cd, list.a_b, list.a_c, 0, 0);
+								to_detail(templist, countobj, site2, nd2, type, cd, 0, 0, list.b_c, list.b_a);
 							};	
 						}else{
 						};	
 					};
 					
 				});
+				
 				$("#grid").propertygrid({
 					columns: [[
 						{field: "match_id", width: "5%", resizable: false},
@@ -252,7 +289,7 @@
 					]]
 				});
 				$("#grid").propertygrid("loadData", detail);
-				datatree(countlist);
+				//datatree(countobj);
 			};
 			
 			//A_C运力计算
@@ -274,19 +311,19 @@
 				var temp;
 				if(fk == "是"){
 					//list.push({"match_id":match_id, "route_name": route_name, "shift": shift, "frequency": frequency, "l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 0, "b_c": load, "b_a":0});
-					temp = to_obj(match_id, route_name, shift, truck_type, frequency, cd, load, 0, load, 0);	
+					temp = to_obj(match_id, route_name, shift, truck_type, frequency, cd, 0, 0, load, 0);	
 				}else{
-					if(model == "全装全卸"){
+					if(model == "全卸全装"){
 						//list.push({"match_id":match_id, "route_name": route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": load, "a_c": 0, "b_c": load, "b_a":0});
 						temp = to_obj(match_id, route_name, shift, truck_type,frequency,  cd,load, 0, load, 0);
 					}else if(model == "先卸后装"){
 						//list.push({"match_id":match_id, "route_name": route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 0.5*load, "a_c": 0.5*load, "b_c": 0.5*load, "b_a":0});
-						temp = to_obj(match_id, route_name, shift, truck_type, frequency,  cd,  0.5*load, 0.5*load, 0.5*load, 0);
+						temp = to_obj(match_id, route_name, shift, truck_type, frequency, cd, 0.5*load, 0.5*load, 0.5*load, 0);
 					}else if(model == "只卸不装"){
-						if(type2 = "转运中心" && type3 = "转运中心"){
+						if(type2 == "转运中心" && type3 == "转运中心"){
 							//list.push({"match_id":item.match_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 0.5*load, "a_c": 0.5*load, "b_c": 0, "b_a":0});
 							temp = to_obj(match_id, route_name, shift, truck_type, frequency,  cd,  0.5*load, 0.5*load, 0, 0);
-						}else if(type2 = "转运中心" && type3 = "集散中心"){
+						}else if(type2 == "转运中心" && type3 == "集散中心"){
 							//list.push({"match_id":item.match_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd,  "truck_type": truck_type, "a_b": 2/3*load, "a_c": 1/3*load, "b_c": 0, "b_a":0});
 							temp = to_obj(match_id, route_name, shift, truck_type, frequency,  cd,  2/3*load, 1/3*load, 0, 0);
 						}else{
@@ -294,10 +331,10 @@
 							temp = to_obj(match_id, route_name, shift, truck_type, frequency,  cd,  1/3*load, 2/3*load, 0, 0);
 						}
 					}else{
-						if(type1 = "转运中心" && type2 = "转运中心"){
+						if(type1 == "转运中心" && type2 == "转运中心"){
 							//list.push({"match_id":item.match_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 0.5*load, "b_c": 0.5*load, "b_a":0});
 							temp = to_obj(match_id, route_name, shift, truck_type, frequency,  cd,  0, 0.5*load, 0.5*load, 0);
-						}else if(type1 = "转运中心" && type2 = "集散中心"){
+						}else if(type1 == "转运中心" && type2 == "集散中心"){
 							//list.push({"match_id":item.match_id, "route_name": item.route_name, "shift": shift, "frequency": frequency,"l_s": cd, "truck_type": truck_type, "a_b": 0, "a_c": 2/3*load, "b_c": 1/3*load, "b_a":0});
 							temp = to_obj(match_id, route_name, shift, truck_type, frequency,  cd,  0, 2/3*load, 1/3*load, 0);
 						}else{
@@ -309,6 +346,21 @@
 				};
 			};
 			
+			//A-B-C按照是否在同一区域统计运力
+			function A_B_C_count(templist, countobj, reg1, reg2, reg3,type, cd, a_b, a_c, b_c, b_a){
+				if(reg1 == reg2 && reg2 == reg3){
+					to_detail(templist, countobj, reg1, reg2, type, cd, a_b, a_c, b_c, b_a);
+				}else{
+					if(reg1 != reg2){
+						to_detail(templist, countobj, reg1, reg2, type, cd, a_b, a_c, 0, 0);
+					};
+					if(reg2 != reg3){
+						to_detail(templist, countobj, reg2, reg3, type, cd, 0, 0, b_c,b_a);
+					}	
+				};
+			};
+			
+			
 			//返回对象
 			function to_obj(match_id, route_name, shift, truck_type,frequency,cd, a_b, a_c, b_c, b_a){
 				var obj = {};
@@ -317,36 +369,66 @@
 			};
 			
 			//产生原始数据
-			function to_detail(templist, countlist, linelist, param1, param2, type, cd, a_b, a_c, b_c, b_a){
-				var index = param1 + param2 + type;
-				if(!templist.contains(index)){
-					countlist[param1+"_"+param2] = new Array();
-					countlist[param1+"_"+param2][type] = new Array();
-					if(cd == "长线"){
-						var countlist[param1+"_"+param2][type]["l_capacity"] = 0;
-						var countlist[param1+"_"+param2][type]["l_line"] = 1;
-						countlist[param1+"_"+param2][type]["l_capacity"] = a_b+a_c+b_c+b_a;
-					}else if(cd == "短线"){
-						var countlist[param1+"_"+param2][type]["s_capacity"] = 0;
-						var countlist[param1+"_"+param2][type]["s_line"] = 1;
-						countlist[param1+"_"+param2][type]["s_capacity"] = a_b+a_c+b_c+b_a;
-					}else{
-					};	
+			function to_detail(templist, countobj, param1, param2, type, cd, a_b, a_c, b_c, b_a){
+				var index1 = param1 + "_" + param2;
+				var index2 = index1 + type;
+				if(!templist.contains(index1)){
+					//var countobj[param1+"_"+param2] = {};
+					var tempindex = {};
+					templist.push(index1);
+					if(!templist.contains(index2)){
+						//var countobj[param1+"_"+param2][type] = {};
+						var temptype = {};
+						templist.push(index2);
+						if(cd == "长线"){
+							//countobj[param1+"_"+param2][type]["l_capacity"] = 0;
+							//countobj[param1+"_"+param2][type]["l_line"] = 1;
+							//countobj[param1+"_"+param2][type]["l_capacity"] = a_b+a_c+b_c+b_a;
+							temptype["l_line"] = 1;
+							temptype["l_capacity"] = a_b+a_c+b_c+b_a;
+							tempindex[type] = temptype;
+						}else if(cd == "短线"){
+							//countobj[param1+"_"+param2][type]["s_capacity"] = 0;
+							//countobj[param1+"_"+param2][type]["s_line"] = 1;
+							//countobj[param1+"_"+param2][type]["s_capacity"] = a_b+a_c+b_c+b_a;
+							temptype["s_line"] = 1;
+							temptype["s_capacity"] = a_b+a_c+b_c+b_a;
+							tempindex[type] = temptype;
+						}else{
+						};	
+						countobj[index1] = tempindex;
+					}	
 				}else{
-					if(cd == "长线"){
-						countlist[param1+"_"+param2][type]["l_capacity"] += (a_b+a_c+b_c+b_a);
-						countlist[param1+"_"+param2][type]["l_line"] += 1;
-					}else if( cd = "短线"){
-						countlist[param1+"_"+param2][type]["s_capacity"] += (a_b+a_c+b_c+b_a);
-						countlist[param1+"_"+param2][type]["s_line"] += 1;
+					if(!templist.contains(index2)){
+						templist.push(index2);
+						var temptype = {};
+						if(cd == "长线"){
+							temptype["l_line"] = 1;
+							temptype["l_capacity"] = a_b+a_c+b_c+b_a;
+							countobj[index1][type] = temptype;
+						}else if(cd == "短线"){
+							temptype["s_line"] = 1;
+							temptype["s_capacity"] = a_b+a_c+b_c+b_a;
+							countobj[index1][type] = temptype;
+						}else{
+						};	
 					}else{
-					};
+						if(cd == "长线"){
+							countobj[index1][type]["l_capacity"] += (a_b+a_c+b_c+b_a);
+							countobj[index1][type]["l_line"] += 1;
+						}else if( cd = "短线"){
+							countobj[index1][type]["s_capacity"] += (a_b+a_c+b_c+b_a);
+							countobj[index1][type]["s_line"] += 1;
+						}else{
+						};
+					};		
 				};	
+				
 			};
 			
 			
 			
-			function datatree(countlist){
+			function datatree(countobj){
 				var json1 = {}, rows1 = [], footer1 = [];//按区域
 				var json2 = {}, rows2 = [], footer2 = []; //按分拨
 				var reglist = [], centerlist = [], typelist = [], routelist = [];
@@ -354,83 +436,103 @@
 				var k = 1, s = 1, t = 1, m = 1;
 				var route_out = [], area_in = [], area_out = [], reg_t =[], all1 = [];//按区域汇总逐级统计变量
 				var center_a = [], reg_a = [], all2 = []; //按分拨汇总逐级统计变量
-				var center_to_reg = [];//分拨和区域的从属关系
+				var center_to_reg = {};//分拨和区域的从属关系
 				
 				
 				//id初始化
-				$.each(countlist, function(i, item){
-					var reg = split(item[0],"_")[0];
-					var reg_or_center = split(item[0],"_")[1];
-					if(reg_or_center.substr(reg_or_center.length-3) <> '区域'){
+				for(var i in countobj){
+					var reg = i.split("_")[0];
+					var reg_or_center = i.split("_")[1];
+					var tempobj = {};
+					//高维对象初始化
+					tempobj["l_capacity"] = 0;
+					tempobj["s_capacity"] = 0;
+					tempobj["l_line"] = 0;
+					tempobj["s_line"] = 0;
+					if(reg_or_center.substr(reg_or_center.length-3) != '区域'){
 						var center = reg_or_center;
-					}else if(reg <> reg_or_center){
+					}else if(reg != reg_or_center){
 						var route = reg + '→' + reg_or_center;
 					}else{};
 					
 					if(!reglist.contains(reg)){
-						var center_to_reg[reg] = []; //center放到对应的reg中
 						reglist.push(reg);
 						regid[reg] = k;
-						area_in[reg] = new Array();
-						area_out[reg] = new Array();
-						reg_t[reg] = new Array();
-						reg_a[reg] = new Array();
-						area_in[reg]["l_capacity"] = 0;
-						area_in[reg]["s_capacity"] = 0;
-						area_in[reg]["l_line"] = 0;
-						area_in[reg]["s_line"] = 0;
-						area_out[reg]["l_capacity"] = 0;
-						area_out[reg]["s_capacity"] = 0;
-						area_out[reg]["l_line"] = 0;
-						area_out[reg]["s_line"] = 0;
-						reg_t[reg]["l_capacity"] = 0;
-						reg_t[reg]["s_capacity"] = 0;
-						reg_t[reg]["l_line"] = 0;
-						reg_t[reg]["s_line"] = 0;
-						reg_a[reg]["l_capacity"] = 0;
-						reg_a[reg]["s_capacity"] = 0;
-						reg_a[reg]["l_line"] = 0;
-						reg_a[reg]["s_line"] = 0;
+						//area_in[reg] = {};
+						//area_out[reg] = {};
+						//reg_t[reg] = {};
+						//reg_a[reg] = {};
+						
+						area_in[reg] = tempobj;
+						area_out[reg] = tempobj;
+						reg_t[reg] = tempobj;
+						reg_a[reg] = tempobj;
+						//area_in[reg]["l_capacity"] = 0;
+						//area_in[reg]["s_capacity"] = 0;
+						//area_in[reg]["l_line"] = 0;
+						//area_in[reg]["s_line"] = 0;
+						//area_out[reg]["l_capacity"] = 0;
+						//area_out[reg]["s_capacity"] = 0;
+						//area_out[reg]["l_line"] = 0;
+						//area_out[reg]["s_line"] = 0;
+						//reg_t[reg]["l_capacity"] = 0;
+						//reg_t[reg]["s_capacity"] = 0;
+						//reg_t[reg]["l_line"] = 0;
+						//reg_t[reg]["s_line"] = 0;
+						//reg_a[reg]["l_capacity"] = 0;
+						//reg_a[reg]["s_capacity"] = 0;
+						//reg_a[reg]["l_line"] = 0;
+						//reg_a[reg]["s_line"] = 0;
 						k++;
 					};
 					if(!centerlist.contains(center)){
 						centerlist.push(center);
 						centerid[center] = s;
-						center_a[center] = new Array();
-						center_a[center]["l_capacity"] = 0;
-						center_a[center]["s_capacity"] = 0;
-						center_a[center]["l_line"] = 0;
-						center_a[center]["s_line"] = 0;
+						center_a[center] = tempobj;
+						//center_a[center] = new Array();
+						//center_a[center]["l_capacity"] = 0;
+						//center_a[center]["s_capacity"] = 0;
+						//center_a[center]["l_line"] = 0;
+						//center_a[center]["s_line"] = 0;
 						s++;
 					};
-					if(!typelist.contains(item[0][0])){ //type编号
-						typelist.push(item[0][0]);
-						typeid[item[0][0]] = t;
+					for(var j in countobj[i]){
+						if(!typelist.contains(j)){ //type编号
+						typelist.push(j);
+						typeid[j] = t;
 						t++;
+					};
 					};
 					if(!routelist.contains(route)){
 							routelist.push(route);
 							routeid[route] = m;
-							route_out[route] = new Array();
-							route_out[route]["l_capacity"] = 0;
-							route_out[route]["s_capacity"] = 0;
-							route_out[route]["l_line"] = 0;
-							route_out[route]["s_line"] = 0;
+							route_out[route] = tempobj;
+							//route_out[route] = new Array();
+							//route_out[route]["l_capacity"] = 0;
+							//route_out[route]["s_capacity"] = 0;
+							//route_out[route]["l_line"] = 0;
+							//route_out[route]["s_line"] = 0;
 							m++;
 						};
 					
-				});
-				
-				
-				$.each(countlist, function(i, item){
-					var reg = split(item[0],"_")[0] + "区域";
-					var reg_or_center = split(item[0],"_")[1];
+				};
+				/*
+				for(var i in countobj){
+					var reg = i.split("_")[0] + "区域";
+					var reg_or_center = i.split("_")[1];
+					for(var j in countobj[i]){
+						var type = 
+					}
+				}*/
+				$.each(countobj, function(i, item){
+					var reg = item[0].split("_")[0] + "区域";
+					var reg_or_center = item[0].split("_")[1];
 					var type = item[0][0];
 					var l_capacity = item[0][0]["l_capacity"];
 					var l_line = item[0][0]["l_line"];
 					var s_capacity = item[0][0]["s_capacity"];
 					var s_line = item[0][0]["s_line"];
-					if(reg_or_center.substr(reg_or_center.length-3) <> '区域'){
+					if(reg_or_center.substr(reg_or_center.length-3) != '区域'){
 						var center = reg_or_center;
 						rows2.push({"id":regid[reg]*10000+centerid[center]*10+typeid[type], "_parentId":regid[reg]*1000+centerid[center], "name":type, "l_capacity": l_capacity, "s_capacity": s_capacity, "capacity": l_capacity + s_capacity, "l_line":l_line, "s_line":s_line, "line":l_line + s_line});
 						center_a[center]["l_capacity"] += l_capacity;
