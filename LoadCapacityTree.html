@@ -2,11 +2,21 @@
 <html>
 	<head>
 		<meta http-equiv = "X-UA-Compatible" content = "IE = edge" charset = "UTF-8"/> 
-		<title>TEST</title>
-		<!-- <link rel = "stylesheet" href = "../src/main/webapp/pages/css/wanma.css"/> -->
+		<title>LoadCalculate</title>
+		<link rel = "stylesheet" href = "../src/main/webapp/pages/css/wanma.css"/>
 		<link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/default/easyui.css"/>
-		<!-- <link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/icon.css"/> -->
-		
+		<link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/icon.css"/>
+		<style type = "text/css">
+			html {
+					font-family: "Microsoft YaHei","Times New Roman";
+				}
+			h1 {
+				font-size: 20px;
+				font-weight: bold;
+				center: align;
+			}
+			
+		</style>
 		<script type = "text/javascript" src = "../src/main/webapp/tools/tssJS/tssJS.all.js"></script>
 		
 		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.min.js"></script>
@@ -20,7 +30,7 @@
 		<script type = "text/javascript">
 			var data, data1;
 			
-			var DATA_URL = "http://10.45.10.216:8080/tss/data/json/2150";
+			var DATA_URL = "http://10.9.44.64:8080//tss/data/json/2214";
 			
 			
 			var method = "POST";
@@ -38,7 +48,7 @@
 				waiting: true,
 				ondata: function(){
 					data =  this.getResponseJSON();
-					datatree(data);
+					//datatree(data);
 					}
 				});	
 				
@@ -61,35 +71,50 @@
 				var reglist = [], routelist = [], typelist = [];
 				var regid = {}, typeid = {}, routeid = {} ;//包含名称和id
 				var s = 1, t = 1, k = 1, route;
-				var area_in_c = {}, area_in_l = {}, area_out_c = {}, area_out_l = {};
-				var route_out_c = {}, route_out_l = {},reg_c= {}, reg_l = {}, all_c = 0, all_l = 0;
+				var area_in = {}, area_out = {}, route_out = {}, reg_a = {}, all = {};
+				all["l_load"] = 0, all["s_load"] = 0, all["l_line"] = 0, all["s_line"] = 0;
+				//var area_in_c = {}, area_in_l = {}, area_out_c = {}, area_out_l = {};
+				//var route_out_c = {}, route_out_l = {},reg_c= {}, reg_l = {}, all_c = 0, all_l = 0;
 				
 				//id初始化
 				for(var i = 0; i < data.length; i++){
-					if(!typelist.contains(data[i]["type"])){
-							typelist.push(data[i]["type"]);
-							typeid[data[i]["type"]] = t;
+					if(!typelist.contains(data[i]["truck_type"])){
+							typelist.push(data[i]["truck_type"]);
+							typeid[data[i]["truck_type"]] = t;
 							t++
 						};
-					if(data[i]["to_reg"] == null){
-						if(!reglist.contains(data[i]["in_reg"])){
-							reglist.push(data[i]["in_reg"]);
-							regid[data[i]["in_reg"]] = s;
-							area_in_c[data[i]["in_reg"]] = 0;
-							area_in_l[data[i]["in_reg"]] = 0;
-							area_out_c[data[i]["in_reg"]] = 0;
-							area_out_l[data[i]["in_reg"]] = 0;
-							reg_c[data[i]["in_reg"]] = 0;
-							reg_l[data[i]["in_reg"]] = 0;
-							s++;
-						};
-					}else{
-						route = data[i]["in_reg"] + "→" + data[i]["to_reg"];
+					if(!reglist.contains(data[i]["reg1"])){
+						reglist.push(data[i]["reg1"]);
+						regid[data[i]["reg1"]] = s;
+						var tempobj1 = {}, tempobj2 = {}, tempobj3 = {};
+						tempobj1["l_load"] = 0;
+						tempobj1["s_load"] = 0;
+						tempobj1["l_line"] = 0;
+						tempobj1["s_line"] = 0;
+						tempobj2["l_load"] = 0;
+						tempobj2["s_load"] = 0;
+						tempobj2["l_line"] = 0;
+						tempobj2["s_line"] = 0;
+						tempobj3["l_load"] = 0;
+						tempobj3["s_load"] = 0;
+						tempobj3["l_line"] = 0;
+						tempobj3["s_line"] = 0;
+						area_in[data[i]["reg1"]] = tempobj1;
+						area_out[data[i]["reg1"]] = tempobj2;
+						reg_a[data[i]["reg1"]] = tempobj3;
+						s++;
+					};
+					if(data[i]["reg2"] != null){
+						route = data[i]["reg1"] + "→" + data[i]["reg2"];
 						if(!routelist.contains(route)){
 							routelist.push(route);
 							routeid[route] = k;
-							route_out_c[route] = 0;
-							route_out_l[route] = 0;
+							var tempobj4 = {};
+							tempobj4["l_load"] = 0;
+							tempobj4["s_load"] = 0;
+							tempobj4["l_line"] = 0;
+							tempobj4["s_line"] = 0;
+							route_out[route] = tempobj4;
 							k++;
 						};
 					};
@@ -97,42 +122,58 @@
 				
 				//最后子节点赋值，按车型，并计算上一层值
 				for(var i = 0; i < data.length; i++){
-					route = data[i]["in_reg"] + "→" + data[i]["to_reg"];
-					var reg = data[i]["in_reg"], type = data[i]["type"], capacity = data[i]["capacity"], line = data[i]["line"];
-					if(data[i]["to_reg"] == null){
-						rows.push({"id":regid[reg]*100+10+typeid[type], "_parentId":regid[reg]*10+1, "name":type, "capacity":capacity, "line":line});
-						area_in_c[reg] += capacity;
-						area_in_l[reg] += line;
+					route = data[i]["reg1"] + "→" + data[i]["reg2"];
+					var reg = data[i]["reg1"], type = data[i]["truck_type"], l_load = data[i]["l_load"], s_load = data[i]["s_load"], l_line = data[i]["l_line"], s_line = data[i]["s_line"];
+					if(data[i]["reg2"] == null){
+						rows.push({"id":regid[reg]*100+10+typeid[type], "_parentId":regid[reg]*10+1, "name":type, "l_load":l_load, "s_load":s_load, "load": l_load+s_load, "l_line":l_line, "s_line":s_line,"line":l_line+s_line});
+						area_in[reg]["l_load"] += l_load;
+						area_in[reg]["s_load"] += s_load;
+						area_in[reg]["l_line"] += l_line;
+						area_in[reg]["s_line"] += s_line;
 					}else{
-						rows.push({"id":regid[reg]*10000+2000+routeid[route]*10+typeid[type], "_parentId":regid[reg]*1000+200+routeid[route], "name":type, "capacity":capacity, "line":line});
-						route_out_c[route] += capacity;
-						route_out_l[route] += line;
+						rows.push({"id":regid[reg]*10000+2000+routeid[route]*10+typeid[type], "_parentId":regid[reg]*1000+200+routeid[route], "name":type,"l_load":l_load, "s_load":s_load, "load": l_load+s_load, "l_line":l_line, "s_line":s_line,"line":l_line+s_line });
+						route_out[route]["l_load"] += l_load;
+						route_out[route]["s_load"] += s_load;
+						route_out[route]["l_line"] += l_line;
+						route_out[route]["s_line"] += s_line;
 					};
 				}
 				//区域外出发区域到目的区域
-				for(var key in route_out_c){
+				for(var key in route_out){
 					var reg = key.substring(0,4);
-					rows.push({"id":regid[reg]*1000+200+routeid[key], "_parentId":regid[reg]*100+20, "name":key, "capacity":route_out_c[key], "line":route_out_l[key], "state":"closed"});
-					area_out_c[reg] += route_out_c[key];
-					area_out_l[reg] +=route_out_l[key];
+					rows.push({"id":regid[reg]*1000+200+routeid[key], "_parentId":regid[reg]*100+20, "name":key, "l_load":route_out[key]["l_load"], "s_load":route_out[key]["s_load"],"load":route_out[key]["l_load"]+route_out[key]["s_load"],"l_line":route_out[key]["l_line"], "s_line":route_out[key]["s_line"],"line":route_out[key]["l_line"]+route_out[key]["s_line"],"state":"closed"});
+					area_out[reg]["l_load"] += route_out[key]["l_load"];
+					area_out[reg]["s_load"] += route_out[key]["s_load"];
+					area_out[reg]["l_line"] += route_out[key]["l_line"];
+					area_out[reg]["s_line"] += route_out[key]["s_line"];
 				}
-				//区域内外
-				for(var key in area_in_c){
-						rows.push({"id":regid[key]*10+1, "_parentId":regid[key], "name":"区域内", "capacity":area_in_c[key], "line":area_in_l[key], "state":"closed"});
-						rows.push({"id":regid[key]*100+20, "_parentId":regid[key], "name":"区域外", "capacity":area_out_c[key], "line":area_out_l[key], "state":"closed"});
-						reg_c[key] += area_in_c[key] + area_out_c[key];
-						reg_l[key] += area_in_l[key] + area_out_l[key];
-						
+				//区域内
+				for(var key in area_in){
+					rows.push({"id":regid[key]*10+1, "_parentId":regid[key], "name":"区域内", "l_load":area_in[key]["l_load"], "s_load":area_in[key]["s_load"],"load":area_in[key]["l_load"]+area_in[key]["s_load"],"l_line":area_in[key]["l_line"],"s_line":area_in[key]["s_line"], "line":area_in[key]["l_line"]+area_in[key]["s_line"],"state":"closed"});
+					reg_a[key]["l_load"] += area_in[key]["l_load"];
+					reg_a[key]["s_load"] += area_in[key]["s_load"];
+					reg_a[key]["l_line"] += area_in[key]["l_line"];	
+					reg_a[key]["s_line"] += area_in[key]["s_line"];
+					};
+					
+				//区域外
+				for(var key in area_out){
+					rows.push({"id":regid[key]*100+20, "_parentId":regid[key], "name":"区域外", "l_load":area_out[key]["l_load"], "s_load":area_out[key]["s_load"],"load":area_out[key]["l_load"]+area_out[key]["s_load"],"l_line":area_out[key]["l_line"],"s_line":area_out[key]["s_line"], "line":area_out[key]["l_line"]+area_out[key]["s_line"],"state":"closed"});
+					reg_a[key]["l_load"] += area_out[key]["l_load"];
+					reg_a[key]["s_load"] += area_out[key]["s_load"];
+					reg_a[key]["l_line"] += area_out[key]["l_line"];	
+					reg_a[key]["s_line"] += area_out[key]["s_line"];
 					};
 				//第一层，每个区域累加
-				for(var key in reg_c){
-					rows.push({"id":regid[key],"name":key, "capacity":Math.round(reg_c[key]*100)/100, "line":reg_l[key], "state":"closed"});
-					all_c += reg_c[key];
-					all_l += reg_l[key];
+				for(var key in reg_a){
+					rows.push({"id":regid[key],"name":key, "l_load":reg_a[key]["l_load"], "s_load":reg_a[key]["s_load"],"load":reg_a[key]["l_load"]+reg_a[key]["l_load"],"l_line":reg_a[key]["l_line"],"s_line":reg_a[key]["s_line"], "line":reg_a[key]["l_line"]+reg_a[key]["l_line"],"state":"closed"});
+					all["l_load"] += reg_a[key]["l_load"];
+					all["s_load"] += reg_a[key]["s_load"];
+					all["l_line"] += reg_a[key]["l_line"];
+					all["s_line"] += reg_a[key]["s_line"];
 				};
-				
-				
-				footer.push({"name": "全网", "capacity": all_c, "line": all_l});
+					
+				footer.push({"name": "全网", "l_load": Math.round(all["l_load"]*100)/100,"s_load": Math.round(all["s_load"]*100)/100,"load": Math.round((all["l_load"]+all["s_load"])*100)/100, "l_line": all["l_line"],"s_line": all["s_line"],"line": all["l_line"]+ all["s_line"]});
 				json["rows"]= rows;
 				json["footer"] = footer;
 				json["total"] = rows.length;
@@ -140,11 +181,11 @@
 			$("#tree").treegrid({
 				idField:'id',
 				treeField:'name',
-				width: 700,
-				height: 500,
+				//width: 700,
+				//height: 500,
 				//rownumbers: true,
 				showFooter: true,
-				animate: true,
+				//animate: true,
 				data: json
 			})
 			
@@ -159,30 +200,34 @@
 			var reglist = [], centerlist = [], typelist = [];
 			var regid = {}, centerid = {}, typeid = {};
 			var k = 1, s = 1, t = 1;
-			var center_a = [], reg_a = [], all = [];
-			var reg_to_center = [];//分拨和区域的从属关系
+			var center_a = {}, reg_a = {}, all = {};
+			var center_to_reg = {};//分拨和区域的从属关系
+			all["l_load"] = 0, all["s_load"] = 0, all["l_line"] = 0, all["s_line"] = 0;
 			
 			
 			//id初始化
 			$.each(data1, function(i, item){
+				var tempobj = {};
+				tempobj["l_load"] = 0;
+				tempobj["s_load"] = 0;
+				tempobj["l_line"] = 0;
+				tempobj["s_line"] = 0;
 				if(!reglist.contains(item.reg)){
-					var center_to_reg[item.reg] = []; //center放到对应的reg中
 					reglist.push(item.reg);
 					regid[item.reg] = k;
-					reg_a[item.reg]["capacity"] = 0;
-					reg_a[item.reg]["line"] = 0;
+					reg_a[item.reg] = tempobj;
+					center_to_reg[item.reg] = [];
 					k++;
 				};
 				if(!centerlist.contains(item.center)){
 					centerlist.push(item.center);
 					centerid[item.center] = s;
-					center_a[item.center]["capacity"] = 0;
-					center_a[item.center]["line"] = 0;
+					center_a[item.center] = tempobj;
 					s++;
 				};
-				if(!typelist.contains(item.type)){
-					typelist.push(item.type);
-					typeid[item.type] = t;
+				if(!typelist.contains(item.truck_type)){
+					typelist.push(item.truck_type);
+					typeid[item.truck_type] = t;
 					t++;
 				};
 				
@@ -190,55 +235,67 @@
 			
 			
 			$.each(data1, function(i, item){
-				var reg = item.reg, center = item.center, type = item.type;
-				rows.push({"id":regid[reg]*10000+centerid[center]*10+typeid[type], "_parentId":regid[reg]*1000+centerid[center], "name":type, "capacity": item.capacity, "line":item.line});
-				center_a[center]["capacity"] += item.capacity;
-				center_a[center]["line"] += item.line;
+				var reg = item.reg, center = item.center, type = item.truck_type,l_load = item.l_load, s_load = item.s_load, l_line = item.l_line, s_line = item.s_line;
+				rows.push({"id":regid[reg]*10000+centerid[center]*10+typeid[type], "_parentId":regid[reg]*1000+centerid[center], "name":type, "l_load": l_load, "s_load": s_load, "load": l_load+s_load, "l_line":l_line,"s_line":s_line,"line":l_line+s_line });
+				center_a[center]["l_load"] += l_load;
+				center_a[center]["s_load"] += s_load;
+				center_a[center]["l_line"] += l_line;
+				center_a[center]["s_line"] += s_line;
 				if(!center_to_reg[reg].contains(center)){
 					center_to_reg[reg].push(center);
 				};
 			});
 			
 			for(var key in center_to_reg){
-				for(var center in center_reg[key]){
-					rows.push({"id":regid[key]*1000+centerid[center], "_parentId":regid[key], "name":center, "capacity": center_a[center]["capacity"], "line":center_a[center]["line"], "state": "closed"});
-					reg_a[key]["capacity"] += center_a[center]["capacity"];
-					reg_a[key]["line"] += center_a[center]["line"];
+				for(var i=0; i< center_to_reg[key].length; i++){
+					var center = center_to_reg[key][i];
+					rows.push({"id":regid[key]*1000+centerid[center], "_parentId":regid[key], "name":center, "l_load": center_a[center]["l_load"], "s_load": center_a[center]["s_load"],"load": center_a[center]["l_load"]+center_a[center]["s_load"],"l_line":center_a[center]["l_line"],"s_line":center_a[center]["s_line"],"line":center_a[center]["l_line"]+center_a[center]["s_line"], "state": "closed"});
+					reg_a[key]["l_load"] += center_a[center]["l_load"];
+					reg_a[key]["s_load"] += center_a[center]["s_load"];
+					reg_a[key]["l_line"] += center_a[center]["l_line"];
+					reg_a[key]["s_line"] += center_a[center]["s_line"];
 				};
-				rows.push({"id":regid[key], "name":key, "capacity": reg_a[key]["capacity"], "line":reg_a[key]["line"], "state": "closed"});
-				all["capacity"] += reg_a[key]["capacity"];
-				all["line"] += reg_a[key]["line"];
+				rows.push({"id":regid[key], "name":key, "l_load": Math.round(reg_a[key]["l_load"]*100)/100, "s_load": Math.round(reg_a[key]["s_load"]*100)/100,"load": Math.round((reg_a[key]["l_load"]+reg_a[key]["s_load"])*100)/100,"l_line":reg_a[key]["l_line"],"s_line":reg_a[key]["s_line"], "line":reg_a[key]["l_line"]+reg_a[key]["s_line"],"state": "closed"});
+				all["l_load"] += reg_a[key]["l_load"];
+				all["s_load"] += reg_a[key]["s_load"];
+				all["l_line"] += reg_a[key]["l_line"];
+				all["s_line"] += reg_a[key]["s_line"];
 			};
 			
-			footer.push({"name": "全网", "capacity": all["capacity"], "line": all["line"]});
+			footer.push({"name": "全网", "l_load": all["l_load"],  "s_load": all["s_load"], "load": all["l_load"]+all["s_load"],"l_line": all["l_line"],"s_line": all["s_line"],"line": all["l_line"]+all["s_line"]});
 			json["rows"]= rows;
-			son["footer"] = footer;
+			json["footer"] = footer;
 			json["total"] = rows.length;
 			
 			$("#tree").treegrid({
 				idField:'id',
 				treeField:'name',
-				width: 700,
-				height: 500,
+				//width: 900,
+				//height:500,
 				//rownumbers: true,
 				showFooter: true,
-				animate: true,
+				//animate: true,
 				data: json
 			});	
 		};
 		
 			
-			
 		</script>
 	</head>
 	<body>
 		<div>
-			<table id = "tree" style = "width:100%; height:100%">
+			<h1 style = "align: center">运力分摊统计</h1>
+			<table id = "tree" style = "width: 900px; min-height: 900">
 				<thead>
 					<tr>
-						<th data-options = "field: 'name'" width = "40%">名称</th>
-						<th data-options = "field: 'line'" width = "30%">车线</th>
-						<th data-options = "field: 'capacity'" width = "30%">运力</th>
+						<th data-options = "field: 'name'" width = "30%">名称</th>
+						<th data-options = "field: 'l_load'" width = "10%">长线运力</th>
+						<th data-options = "field: 's_load'" width = "10%">短线运力</th>
+						<th data-options = "field: 'load'" width = "20%">运力总计</th>
+						<th data-options = "field: 'l_line'" width = "10%">长线车线</th>
+						<th data-options = "field: 's_line'" width = "10%">短线车线</th>
+						<th data-options = "field: 'line'" width = "10%">车线总计</th>
+						
 					</tr>
 				</thead>
 			</table>
