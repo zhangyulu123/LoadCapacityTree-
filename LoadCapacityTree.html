@@ -7,15 +7,43 @@
 		<link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/default/easyui.css"/>
 		<link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/icon.css"/>
 		<style type = "text/css">
-			html {
-					font-family: "Microsoft YaHei","Times New Roman";
-				}
-			h1 {
-				font-size: 20px;
-				font-weight: bold;
-				center: align;
+		
+			body {
+				margin-top: 0px;
 			}
 			
+			/*	
+			.datagrid-cell {
+				font-size: 16px;
+			}
+			
+			.datagrid-header .datagrid-cell span {
+				font-size: 16px;
+			}
+			
+			.tree-title {
+				font-size: 16px;
+			}
+			.datagrid-row {
+				height: 35px;
+			}
+			
+			*/
+			
+			.datagrid-header td, .datagrid-footer td{
+				text-align: right;
+			}
+			
+			.datagrid-body td {
+				text-align: right;
+			}
+			
+			
+			div.datagrid-cell.datagrid-cell-c1-name {
+				text-align: left;
+			}
+			
+		
 		</style>
 		<script type = "text/javascript" src = "../src/main/webapp/tools/tssJS/tssJS.all.js"></script>
 		
@@ -30,14 +58,13 @@
 		<script type = "text/javascript">
 			var data, data1;
 			
-			var DATA_URL = "http://10.9.44.64:8080//tss/data/json/2214";
+			var DATA_URL = "http://10.9.45.64:8080//tss/data/json/2214";
 			
 			
 			var method = "POST";
 			var param1 = {"param1": "按区域","param2": "-1" };
 			var param2 = {"param1": "按分拨","param2": "-1" };
 			
-
 			
 			$(function(){
 			 
@@ -141,7 +168,7 @@
 				//区域外出发区域到目的区域
 				for(var key in route_out){
 					var reg = key.substring(0,4);
-					rows.push({"id":regid[reg]*1000+200+routeid[key], "_parentId":regid[reg]*100+20, "name":key, "l_load":route_out[key]["l_load"], "s_load":route_out[key]["s_load"],"load":route_out[key]["l_load"]+route_out[key]["s_load"],"l_line":route_out[key]["l_line"], "s_line":route_out[key]["s_line"],"line":route_out[key]["l_line"]+route_out[key]["s_line"],"state":"closed"});
+					rows.push({"id":regid[reg]*1000+200+routeid[key], "_parentId":regid[reg]*100+20, "name":key, "l_load":Math.round(route_out[key]["l_load"]*100)/100, "s_load":Math.round(route_out[key]["s_load"]*100)/100,"load":Math.round((route_out[key]["l_load"]+route_out[key]["s_load"])*100)/100,"l_line":route_out[key]["l_line"], "s_line":route_out[key]["s_line"],"line":route_out[key]["l_line"]+route_out[key]["s_line"],"state":"closed"});
 					area_out[reg]["l_load"] += route_out[key]["l_load"];
 					area_out[reg]["s_load"] += route_out[key]["s_load"];
 					area_out[reg]["l_line"] += route_out[key]["l_line"];
@@ -149,7 +176,7 @@
 				}
 				//区域内
 				for(var key in area_in){
-					rows.push({"id":regid[key]*10+1, "_parentId":regid[key], "name":"区域内", "l_load":area_in[key]["l_load"], "s_load":area_in[key]["s_load"],"load":area_in[key]["l_load"]+area_in[key]["s_load"],"l_line":area_in[key]["l_line"],"s_line":area_in[key]["s_line"], "line":area_in[key]["l_line"]+area_in[key]["s_line"],"state":"closed"});
+					rows.push({"id":regid[key]*10+1, "_parentId":regid[key], "name":"区域内", "l_load":Math.round(area_in[key]["l_load"]*100)/100, "s_load":Math.round(area_in[key]["s_load"]*100)/100,"load":Math.round((area_in[key]["l_load"]+area_in[key]["s_load"])*100)/100,"l_line":area_in[key]["l_line"],"s_line":area_in[key]["s_line"], "line":area_in[key]["l_line"]+area_in[key]["s_line"],"state":"closed"});
 					reg_a[key]["l_load"] += area_in[key]["l_load"];
 					reg_a[key]["s_load"] += area_in[key]["s_load"];
 					reg_a[key]["l_line"] += area_in[key]["l_line"];	
@@ -158,7 +185,7 @@
 					
 				//区域外
 				for(var key in area_out){
-					rows.push({"id":regid[key]*100+20, "_parentId":regid[key], "name":"区域外", "l_load":area_out[key]["l_load"], "s_load":area_out[key]["s_load"],"load":area_out[key]["l_load"]+area_out[key]["s_load"],"l_line":area_out[key]["l_line"],"s_line":area_out[key]["s_line"], "line":area_out[key]["l_line"]+area_out[key]["s_line"],"state":"closed"});
+					rows.push({"id":regid[key]*100+20, "_parentId":regid[key], "name":"区域外", "l_load":Math.round(area_out[key]["l_load"]*100)/100, "s_load":Math.round(area_out[key]["s_load"]*100)/100,"load":Math.round((area_out[key]["l_load"]+area_out[key]["s_load"])*100)/100,"l_line":area_out[key]["l_line"],"s_line":area_out[key]["s_line"], "line":area_out[key]["l_line"]+area_out[key]["s_line"],"state":"closed"});
 					reg_a[key]["l_load"] += area_out[key]["l_load"];
 					reg_a[key]["s_load"] += area_out[key]["s_load"];
 					reg_a[key]["l_line"] += area_out[key]["l_line"];	
@@ -166,7 +193,7 @@
 					};
 				//第一层，每个区域累加
 				for(var key in reg_a){
-					rows.push({"id":regid[key],"name":key, "l_load":reg_a[key]["l_load"], "s_load":reg_a[key]["s_load"],"load":reg_a[key]["l_load"]+reg_a[key]["l_load"],"l_line":reg_a[key]["l_line"],"s_line":reg_a[key]["s_line"], "line":reg_a[key]["l_line"]+reg_a[key]["l_line"],"state":"closed"});
+					rows.push({"id":regid[key],"name":key, "l_load":Math.round(reg_a[key]["l_load"]*100)/100, "s_load":Math.round(reg_a[key]["s_load"]*100)/100,"load":Math.round((reg_a[key]["l_load"]+reg_a[key]["l_load"])*100)/100,"l_line":reg_a[key]["l_line"],"s_line":reg_a[key]["s_line"], "line":reg_a[key]["l_line"]+reg_a[key]["s_line"],"state":"closed"});
 					all["l_load"] += reg_a[key]["l_load"];
 					all["s_load"] += reg_a[key]["s_load"];
 					all["l_line"] += reg_a[key]["l_line"];
@@ -177,8 +204,10 @@
 				json["rows"]= rows;
 				json["footer"] = footer;
 				json["total"] = rows.length;
+				console.log(json);
 				
 			$("#tree").treegrid({
+				title: '运力分摊统计汇总',
 				idField:'id',
 				treeField:'name',
 				//width: 700,
@@ -207,22 +236,27 @@
 			
 			//id初始化
 			$.each(data1, function(i, item){
-				var tempobj = {};
-				tempobj["l_load"] = 0;
-				tempobj["s_load"] = 0;
-				tempobj["l_line"] = 0;
-				tempobj["s_line"] = 0;
+				var tempobj1 = {}, tempobj2 = {};
+				tempobj1["l_load"] = 0;
+				tempobj1["s_load"] = 0;
+				tempobj1["l_line"] = 0;
+				tempobj1["s_line"] = 0;
+				tempobj2["l_load"] = 0;
+				tempobj2["s_load"] = 0;
+				tempobj2["l_line"] = 0;
+				tempobj2["s_line"] = 0;
+				
 				if(!reglist.contains(item.reg)){
 					reglist.push(item.reg);
 					regid[item.reg] = k;
-					reg_a[item.reg] = tempobj;
+					reg_a[item.reg] = tempobj1;
 					center_to_reg[item.reg] = [];
 					k++;
 				};
 				if(!centerlist.contains(item.center)){
 					centerlist.push(item.center);
 					centerid[item.center] = s;
-					center_a[item.center] = tempobj;
+					center_a[item.center] = tempobj2;
 					s++;
 				};
 				if(!typelist.contains(item.truck_type)){
@@ -236,7 +270,7 @@
 			
 			$.each(data1, function(i, item){
 				var reg = item.reg, center = item.center, type = item.truck_type,l_load = item.l_load, s_load = item.s_load, l_line = item.l_line, s_line = item.s_line;
-				rows.push({"id":regid[reg]*10000+centerid[center]*10+typeid[type], "_parentId":regid[reg]*1000+centerid[center], "name":type, "l_load": l_load, "s_load": s_load, "load": l_load+s_load, "l_line":l_line,"s_line":s_line,"line":l_line+s_line });
+				rows.push({"id":regid[reg]*10000+centerid[center]*10+typeid[type], "_parentId":regid[reg]*1000+centerid[center], "name":type, "l_load": Math.round(l_load*100)/100, "s_load": Math.round(s_load*100)/100, "load": Math.round((l_load+s_load)*100)/100, "l_line":l_line,"s_line":s_line,"line":l_line+s_line });
 				center_a[center]["l_load"] += l_load;
 				center_a[center]["s_load"] += s_load;
 				center_a[center]["l_line"] += l_line;
@@ -249,7 +283,7 @@
 			for(var key in center_to_reg){
 				for(var i=0; i< center_to_reg[key].length; i++){
 					var center = center_to_reg[key][i];
-					rows.push({"id":regid[key]*1000+centerid[center], "_parentId":regid[key], "name":center, "l_load": center_a[center]["l_load"], "s_load": center_a[center]["s_load"],"load": center_a[center]["l_load"]+center_a[center]["s_load"],"l_line":center_a[center]["l_line"],"s_line":center_a[center]["s_line"],"line":center_a[center]["l_line"]+center_a[center]["s_line"], "state": "closed"});
+					rows.push({"id":regid[key]*1000+centerid[center], "_parentId":regid[key], "name":center, "l_load": Math.round(center_a[center]["l_load"]*100)/100, "s_load": Math.round(center_a[center]["s_load"]*100)/100,"load": Math.round((center_a[center]["l_load"]+center_a[center]["s_load"])*100)/100,"l_line":center_a[center]["l_line"],"s_line":center_a[center]["s_line"],"line":center_a[center]["l_line"]+center_a[center]["s_line"], "state": "closed"});
 					reg_a[key]["l_load"] += center_a[center]["l_load"];
 					reg_a[key]["s_load"] += center_a[center]["s_load"];
 					reg_a[key]["l_line"] += center_a[center]["l_line"];
@@ -262,14 +296,15 @@
 				all["s_line"] += reg_a[key]["s_line"];
 			};
 			
-			footer.push({"name": "全网", "l_load": all["l_load"],  "s_load": all["s_load"], "load": all["l_load"]+all["s_load"],"l_line": all["l_line"],"s_line": all["s_line"],"line": all["l_line"]+all["s_line"]});
+			footer.push({"name": "全网", "l_load": Math.round(all["l_load"]*100)/100,  "s_load": Math.round(all["s_load"]*100)/100, "load": Math.round((all["l_load"]+all["s_load"])*100)/100,"l_line": all["l_line"],"s_line": all["s_line"],"line": all["l_line"]+all["s_line"]});
 			json["rows"]= rows;
 			json["footer"] = footer;
 			json["total"] = rows.length;
 			
 			$("#tree").treegrid({
+				title: '运力分摊统计汇总',
 				idField:'id',
-				treeField:'name',
+				treeField:'name',	
 				//width: 900,
 				//height:500,
 				//rownumbers: true,
@@ -277,21 +312,22 @@
 				//animate: true,
 				data: json
 			});	
+			
 		};
 		
 			
 		</script>
 	</head>
 	<body>
-		<div>
-			<h1 style = "align: center">运力分摊统计</h1>
-			<table id = "tree" style = "width: 900px; min-height: 900">
+		<div id = "wrapper">
+			<!--<div id = "title">运力分摊统计汇总</div>-->
+			<table id = "tree">
 				<thead>
 					<tr>
-						<th data-options = "field: 'name'" width = "30%">名称</th>
+						<th data-options = "field: 'name'" width = "20%">区域名称</th>
 						<th data-options = "field: 'l_load'" width = "10%">长线运力</th>
 						<th data-options = "field: 's_load'" width = "10%">短线运力</th>
-						<th data-options = "field: 'load'" width = "20%">运力总计</th>
+						<th data-options = "field: 'load'" width = "10%">运力总计</th>
 						<th data-options = "field: 'l_line'" width = "10%">长线车线</th>
 						<th data-options = "field: 's_line'" width = "10%">短线车线</th>
 						<th data-options = "field: 'line'" width = "10%">车线总计</th>
