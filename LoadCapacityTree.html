@@ -12,45 +12,54 @@
 				margin-top: 0px;
 			}
 			
-			/*	
-			.datagrid-cell {
-				font-size: 16px;
+			#title {
+				text-align: center;
+				font-size: 24px;
+				margin-top: 20px;
+				color: #293C55;
+				letter-spacing: 8px;
 			}
 			
-			.datagrid-header .datagrid-cell span {
-				font-size: 16px;
+			#nav {
+				height: 50px
 			}
 			
-			.tree-title {
-				font-size: 16px;
-			}
-			.datagrid-row {
-				height: 35px;
+			#nav ul {
+				width: 500px;
+				float: right;
 			}
 			
-			*/
-			
-			.datagrid-header td, .datagrid-footer td{
-				text-align: right;
+			#nav li {
+				float: left;
+				display: block;
+				text-decoration: none;
 			}
 			
-			.datagrid-body td {
-				text-align: right;
+			input[type="checkbox"] {
+				width: 20px;
 			}
 			
-			
-			div.datagrid-cell.datagrid-cell-c1-name {
-				text-align: left;
+			input[type="button"] {
+				width: 50px;
+				height: 25px; 
 			}
 			
+			input[type="checkbox"]:hover {
+				cursor: pointer;
+			}
+			
+			input[type="button"]:hover {
+				cursor: pointer;
+				background:#95B8E7;
+				border: none;
+			}
 		
 		</style>
 		<script type = "text/javascript" src = "../src/main/webapp/tools/tssJS/tssJS.all.js"></script>
 		
 		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.min.js"></script>
 		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.easyui.min.js"></script>
-		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/easyui-lang-zh_CN.js"></script>
-		
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/easyui-lang-zh_CN.js"></script>	
 		<script type = "text/javascript" src = "../src/main/webapp/tools/echarts/echarts-3.1.5.js"></script>
 		<!-- <script type = "text/javascript" src = "../src/main/webapp/more/bi_template/echart.js"></script> -->
 		<!-- <script type = "text/javascript" src = "../src/main/webapp/more/bi_template/common.js"></script> -->
@@ -67,7 +76,17 @@
 			
 			
 			$(function(){
-			 
+			/*	globalValiable = window.parent.globalValiable;
+				if(globalValiable && globalValiable){
+					queryParams = globalValiable.queryParams;
+					if(queryParams.param1 == '按区域'){
+						datatree(queryParams.data);
+					}else{
+						datatree1(queryParams.data);
+					}
+				}*/
+				
+			
 				tssJS.ajax({
 				url: DATA_URL,
 				params: param1,
@@ -75,7 +94,7 @@
 				waiting: true,
 				ondata: function(){
 					data =  this.getResponseJSON();
-					//datatree(data);
+					datatree(data);
 					}
 				});	
 				
@@ -86,13 +105,13 @@
 				waiting: true,
 				ondata: function(){
 					data1 =  this.getResponseJSON();
-					datatree1(data1);
+					//datatree1(data1);
 					}
 				});	
 					
 			});
 
-			
+			//按区域统计
 			function  datatree(data){
 				var json = {}, rows = [], footer = [];
 				var reglist = [], routelist = [], typelist = [];
@@ -207,14 +226,10 @@
 				console.log(json);
 				
 			$("#tree").treegrid({
-				title: '运力分摊统计汇总',
 				idField:'id',
 				treeField:'name',
-				//width: 700,
-				//height: 500,
-				//rownumbers: true,
+				height: 500,
 				showFooter: true,
-				//animate: true,
 				data: json
 			})
 			
@@ -223,7 +238,7 @@
 		};
 		
 		
-		
+		//按分拨统计
 		function datatree1(data1){
 			var json = {}, rows = [], footer = [];
 			var reglist = [], centerlist = [], typelist = [];
@@ -302,35 +317,93 @@
 			json["total"] = rows.length;
 			
 			$("#tree").treegrid({
-				title: '运力分摊统计汇总',
 				idField:'id',
 				treeField:'name',	
-				//width: 900,
-				//height:500,
-				//rownumbers: true,
+				height:500,
 				showFooter: true,
-				//animate: true,
 				data: json
 			});	
 			
 		};
 		
+		//复选框选中时重新筛选数据
+		function filter(){
+			//var data = queryParams.data
+			var str=document.getElementsByName("box");
+			var checkedlist = [], newdata = [], itemlist = [];
+			for(var i = 0; i < str.length; i++){ //确定勾选的值
+				if(str[i].checked){
+					checkedlist.push(str[i].value);
+				}else{
+					continue;
+				}
+			};
 			
+			$.each(data, function(i, item){
+				var fre = item.freq_id;
+				for(var j = 0; j < checkedlist.length; j++){
+					if(fre.indexOf(checkedlist[j]) != '-1'){
+						if(!itemlist.contains(item)){
+							itemlist.push(item);
+							newdata.push(item);
+							break;
+						}else{
+							continue;
+						}
+					}
+				};
+			});
+			//按区域和按分拨调用的函数不同
+		/*	if(queryParams.param1 == '按区域'){
+				datatree(newdata);
+			}else{
+				datatree1(newdata);
+			};*/
+			datatree(newdata);
+		}	
+		
+		
+		
+		//恢复初始数据
+		function reset(){
+			$('input:checkbox').attr('checked', false);
+		/*	if(queryParams.param1 == '按区域'){
+				datatree(queryParams.data);
+			}else{
+				datatree1(queryParams.data);
+			};
+		*/
+			datatree(data)
+		}
+		
 		</script>
 	</head>
 	<body>
 		<div id = "wrapper">
-			<!--<div id = "title">运力分摊统计汇总</div>-->
+			<div id = "title">运力分摊统计汇总</div>
+			<div id = 'nav'>
+				<ul>
+					<li><input type="checkbox" name="box" value="1" />周一</li>
+					<li><input type="checkbox" name="box" value="2" />周二</li>
+					<li><input type="checkbox" name="box" value="3" />周三</li>
+					<li><input type="checkbox" name="box" value="4" />周四</li>
+					<li><input type="checkbox" name="box" value="5" />周五</li>
+					<li><input type="checkbox" name="box" value="6" />周六</li>
+					<li><input type="checkbox" name="box" value="7" />周日&nbsp;&nbsp;&nbsp;&nbsp;</li>
+					<li><input type="button" onclick="filter()" value="确定" />&nbsp;&nbsp;</li>
+					<li><input type="button" onclick="reset()" value="刷新" /></li>
+				</ul>
+			</div>
 			<table id = "tree">
 				<thead>
 					<tr>
-						<th data-options = "field: 'name'" width = "20%">区域名称</th>
-						<th data-options = "field: 'l_load'" width = "10%">长线运力</th>
-						<th data-options = "field: 's_load'" width = "10%">短线运力</th>
-						<th data-options = "field: 'load'" width = "10%">运力总计</th>
-						<th data-options = "field: 'l_line'" width = "10%">长线车线</th>
-						<th data-options = "field: 's_line'" width = "10%">短线车线</th>
-						<th data-options = "field: 'line'" width = "10%">车线总计</th>
+						<th data-options = "field: 'name'" width = "20%" align = "left">区域名称</th>
+						<th data-options = "field: 'l_load'" width = "10%" align = "right">长线运力</th>
+						<th data-options = "field: 's_load'" width = "10%" align = "right">短线运力</th>
+						<th data-options = "field: 'load'" width = "10%" align = "right">运力总计</th>
+						<th data-options = "field: 'l_line'" width = "10%" align = "right">长线车线</th>
+						<th data-options = "field: 's_line'" width = "10%" align = "right">短线车线</th>
+						<th data-options = "field: 'line'" width = "10%" align = "right">车线总计</th>
 						
 					</tr>
 				</thead>
