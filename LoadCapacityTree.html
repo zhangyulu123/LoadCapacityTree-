@@ -171,18 +171,54 @@
 					route = data[i]["reg1"] + "→" + data[i]["reg2"];
 					var reg = data[i]["reg1"], type = data[i]["truck_type"], l_load = data[i]["l_load"], s_load = data[i]["s_load"], l_line = data[i]["l_line"], s_line = data[i]["s_line"];
 					if(data[i]["reg2"] == null){
-						rows.push({"id":regid[reg]*100+10+typeid[type], "_parentId":regid[reg]*10+1, "name":type, "l_load":l_load, "s_load":s_load, "load": l_load+s_load, "l_line":l_line, "s_line":s_line,"line":l_line+s_line});
+						if(rows.length == 0){
+							rows.push({"id":regid[reg]*100+10+typeid[type], "_parentId":regid[reg]*10+1, "name":type, "l_load":l_load, "s_load":s_load, "load": l_load+s_load, "l_line":l_line, "s_line":s_line,"line":l_line+s_line});
+						}else{
+							for(var j = 0; j < rows.length; j++){
+								if(parseInt(rows[j]["id"]) === regid[reg]*100+10+typeid[type]){
+									rows[j]["l_load"] += l_load;
+									rows[j]["s_load"] += s_load;
+									rows[j]["l_line"] += l_line;
+									rows[j]["s_line"] += s_line;
+									break;
+								}else{
+									continue;	
+								};	
+							}
+							if(j == rows.length){
+								rows.push({"id":regid[reg]*100+10+typeid[type], "_parentId":regid[reg]*10+1, "name":type, "l_load":l_load, "s_load":s_load, "load": l_load+s_load, "l_line":l_line, "s_line":s_line,"line":l_line+s_line});
+							}
+						};
 						area_in[reg]["l_load"] += l_load;
 						area_in[reg]["s_load"] += s_load;
 						area_in[reg]["l_line"] += l_line;
 						area_in[reg]["s_line"] += s_line;
 					}else{
-						rows.push({"id":regid[reg]*10000+2000+routeid[route]*10+typeid[type], "_parentId":regid[reg]*1000+200+routeid[route], "name":type,"l_load":l_load, "s_load":s_load, "load": l_load+s_load, "l_line":l_line, "s_line":s_line,"line":l_line+s_line });
+						if(rows.length == 0){
+							rows.push({"id":regid[reg]*10000+2000+routeid[route]*10+typeid[type], "_parentId":regid[reg]*1000+200+routeid[route], "name":type,"l_load":l_load, "s_load":s_load, "load": l_load+s_load, "l_line":l_line, "s_line":s_line,"line":l_line+s_line });
+						}else{
+							for(var j = 0; j < rows.length; j++){
+								if(parseInt(rows[j]["id"]) === regid[reg]*10000+2000+routeid[route]*10+typeid[type]){
+									rows[j]["l_load"] += l_load;
+									rows[j]["s_load"] += s_load;
+									rows[j]["l_line"] += l_line;
+									rows[j]["s_line"] += s_line;
+									break;
+								}else{
+									continue;
+								};
+								
+							}
+							if(j == rows.length){
+								rows.push({"id":regid[reg]*10000+2000+routeid[route]*10+typeid[type], "_parentId":regid[reg]*1000+200+routeid[route], "name":type,"l_load":l_load, "s_load":s_load, "load": l_load+s_load, "l_line":l_line, "s_line":s_line,"line":l_line+s_line });
+							}
+						};
 						route_out[route]["l_load"] += l_load;
 						route_out[route]["s_load"] += s_load;
 						route_out[route]["l_line"] += l_line;
 						route_out[route]["s_line"] += s_line;
 					};
+					
 				}
 				//区域外出发区域到目的区域
 				for(var key in route_out){
@@ -285,7 +321,26 @@
 			
 			$.each(data1, function(i, item){
 				var reg = item.reg, center = item.center, type = item.truck_type,l_load = item.l_load, s_load = item.s_load, l_line = item.l_line, s_line = item.s_line;
-				rows.push({"id":regid[reg]*10000+centerid[center]*10+typeid[type], "_parentId":regid[reg]*1000+centerid[center], "name":type, "l_load": Math.round(l_load*100)/100, "s_load": Math.round(s_load*100)/100, "load": Math.round((l_load+s_load)*100)/100, "l_line":l_line,"s_line":s_line,"line":l_line+s_line });
+				
+				if(rows.length == 0){
+					rows.push({"id":regid[reg]*10000+centerid[center]*10+typeid[type], "_parentId":regid[reg]*1000+centerid[center], "name":type, "l_load": Math.round(l_load*100)/100, "s_load": Math.round(s_load*100)/100, "load": Math.round((l_load+s_load)*100)/100, "l_line":l_line,"s_line":s_line,"line":l_line+s_line });
+				}else{
+					for(var j = 0; j < rows.length; j++){
+						if(parseInt(rows[j]["id"]) === regid[reg]*10000+centerid[center]*10+typeid[type]){
+							rows[j]["l_load"] += l_load;
+							rows[j]["s_load"] += s_load;
+							rows[j]["l_line"] += l_line;
+							rows[j]["s_line"] += s_line;
+							break;
+						}else{
+							continue;	
+						};	
+					}
+					if(j == rows.length){
+						rows.push({"id":regid[reg]*10000+centerid[center]*10+typeid[type], "_parentId":regid[reg]*1000+centerid[center], "name":type, "l_load": Math.round(l_load*100)/100, "s_load": Math.round(s_load*100)/100, "load": Math.round((l_load+s_load)*100)/100, "l_line":l_line,"s_line":s_line,"line":l_line+s_line });
+					}
+				};
+				
 				center_a[center]["l_load"] += l_load;
 				center_a[center]["s_load"] += s_load;
 				center_a[center]["l_line"] += l_line;
@@ -380,7 +435,7 @@
 	</head>
 	<body>
 		<div id = "wrapper">
-			<div id = "title">运力分摊统计汇总</div>
+			<div id = "title">运力统计汇总</div>
 			<div id = 'nav'>
 				<ul>
 					<li><input type="checkbox" name="box" value="1" />周一</li>
