@@ -77,7 +77,7 @@
 			
 			$(function(){
 			/*	globalValiable = window.parent.globalValiable;
-				if(globalValiable && globalValiable){
+				if(globalValiable && globalValiable.data){
 					queryParams = globalValiable.queryParams;
 					if(queryParams.param1 == '按区域'){
 						datatree(queryParams.data);
@@ -409,12 +409,16 @@
 				};
 			});
 			//按区域和按分拨调用的函数不同
-		/*	if(queryParams.param1 == '按区域'){
+			
+			if(checkedlist.length > 0){
+			/*	if(queryParams.param1 == '按区域'){
+					datatree(newdata);
+				}else{
+					datatree1(newdata);
+				};*/
 				datatree(newdata);
-			}else{
-				datatree1(newdata);
-			};*/
-			datatree(newdata);
+			};
+			
 		}	
 		
 		
