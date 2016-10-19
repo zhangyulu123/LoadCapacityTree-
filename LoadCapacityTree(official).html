@@ -3,9 +3,36 @@
 	<head>
 		<meta http-equiv = "X-UA-Compatible" content = "IE = edge" charset = "UTF-8"/> 
 		<title>LoadCalculate</title>
-		<link rel = "stylesheet" href = "../src/main/webapp/pages/css/wanma.css"/>
+		
+		<!-- 2016-5-23 张煜璐 -->
+		
+ <!--	<link rel = "stylesheet" href = "../src/main/webapp/pages/css/wanma.css"/>
 		<link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/default/easyui.css"/>
-		<link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/icon.css"/>
+		<link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/icon.css"/> 
+		<script type = "text/javascript" src = "../src/main/webapp/tools/tssJS/tssJS.all.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.min.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.easyui.min.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/easyui-lang-zh_CN.js"></script>	
+		<script type = "text/javascript" src = "../src/main/webapp/tools/echarts/echarts-3.1.5.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/more/bi_template/echart.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/more/bi_template/common.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/pages/js/common.js"></script> -->
+		<link rel="stylesheet" href="../css/wanma.css">
+		<link rel="stylesheet" href="../../../tools/easyui/themes/default/easyui.css">
+		<link rel="stylesheet" href="../../../tools/easyui/themes/icon.css">
+
+		<script src="../../../tools/tssJS/tssJS.all.js"></script>
+
+		<script src="../../../tools/easyui/jquery.min.js"></script>
+		<script src="../../../tools/easyui/jquery.easyui.min.js"></script>
+
+		<script src="../../../tools/easyui/easyui-lang-zh_CN.js"></script>
+		<script src="../js/common.js"></script>
+		<script type="text/javascript" src="../../../tools/easyui/datagrid-filter.js"></script>
+		<script src="../../../tools/echarts/echarts-all-2.1.10.js"></script>
+		<script src="../../../more/bi_template/echart.js"></script>
+		<script src="../../../more/bi_template/common.js"></script>
+
 		<style type = "text/css">
 		
 			body {
@@ -21,7 +48,7 @@
 			}
 			
 			#nav {
-				height: 50px
+				height: 55px
 			}
 			
 			#nav ul {
@@ -34,7 +61,7 @@
 				display: block;
 				text-decoration: none;
 			}
-			
+			#research{display:none;}
 			input[type="checkbox"] {
 				width: 20px;
 			}
@@ -55,60 +82,51 @@
 			}
 		
 		</style>
-		<script type = "text/javascript" src = "../src/main/webapp/tools/tssJS/tssJS.all.js"></script>
-		
-		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.min.js"></script>
-		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.easyui.min.js"></script>
-		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/easyui-lang-zh_CN.js"></script>	
-		<script type = "text/javascript" src = "../src/main/webapp/tools/echarts/echarts-3.1.5.js"></script>
-		<!-- <script type = "text/javascript" src = "../src/main/webapp/more/bi_template/echart.js"></script> -->
-		<!-- <script type = "text/javascript" src = "../src/main/webapp/more/bi_template/common.js"></script> -->
-		<!-- <script type = "text/javascript" src = "../src/main/webapp/pages/js/common.js"></script> -->
 		<script type = "text/javascript">
-			var data, data1;
+			var data;
 			
-			var DATA_URL = "http://10.9.45.64:8080//tss/data/json/2214";
-			
-			
+			//var DATA_URL = "http://10.9.45.64:8080//tss/data/json/2214";
+			var DATA_URL = "/tss/data/json/2254";
 			var method = "POST";
-			var param1 = {"param1": "按区域","param2": "-1" };
-			var param2 = {"param1": "按分拨","param2": "-1" };
+			//var param1 = {"param1": "按区域","param2": "-1" };
+			//var param2 = {"param1": "按分拨","param2": "-1" };
 			
 			
 			$(function(){
-			/*	globalValiable = window.parent.globalValiable;
-				if(globalValiable && globalValiable.data){
-					queryParams = globalValiable.queryParams;
-					if(queryParams.param1 == '按区域'){
-						datatree(queryParams.data);
+				globalValiable = window.parent.globalValiable;
+				if(globalValiable && globalValiable.queryParams){
+					params = globalValiable.queryParams;
+					if(params.param2=='-1'){
+						$("#title").html("全网车线运力统计");
 					}else{
-						datatree1(queryParams.data);
+						$("#title").html(params.param2 + "车线运力统计");
 					}
-				}*/
-				
-			
-				tssJS.ajax({
-				url: DATA_URL,
-				params: param1,
-				method: method,
-				waiting: true,
-				ondata: function(){
-					data =  this.getResponseJSON();
-					datatree(data);
-					}
-				});	
-				
-				tssJS.ajax({
-				url: DATA_URL,
-				params: param2,
-				method: method,
-				waiting: true,
-				ondata: function(){
-					data1 =  this.getResponseJSON();
-					//datatree1(data1);
-					}
-				});	
 					
+					if(params.param1 == '按区域'){
+						tssJS.ajax({
+						url: DATA_URL,
+						params: params,
+						method: method,
+						waiting: true,
+						ondata: function(){
+							data =  this.getResponseJSON();
+							datatree(data);
+							}
+						});	
+					}else{
+						tssJS.ajax({
+						url: DATA_URL,
+						params: params,
+						method: method,
+						waiting: true,
+						ondata: function(){
+							data =  this.getResponseJSON();
+							datatree1(data);
+							}
+					});	
+					}	
+				}
+						
 			});
 
 			//按区域统计
@@ -255,7 +273,7 @@
 					all["s_line"] += reg_a[key]["s_line"];
 				};
 					
-				footer.push({"name": "全网", "l_load": Math.round(all["l_load"]*100)/100,"s_load": Math.round(all["s_load"]*100)/100,"load": Math.round((all["l_load"]+all["s_load"])*100)/100, "l_line": all["l_line"],"s_line": all["s_line"],"line": all["l_line"]+ all["s_line"]});
+				footer.push({"name": "合计", "l_load": Math.round(all["l_load"]*100)/100,"s_load": Math.round(all["s_load"]*100)/100,"load": Math.round((all["l_load"]+all["s_load"])*100)/100, "l_line": all["l_line"],"s_line": all["s_line"],"line": all["l_line"]+ all["s_line"]});
 				json["rows"]= rows;
 				json["footer"] = footer;
 				json["total"] = rows.length;
@@ -366,7 +384,7 @@
 				all["s_line"] += reg_a[key]["s_line"];
 			};
 			
-			footer.push({"name": "全网", "l_load": Math.round(all["l_load"]*100)/100,  "s_load": Math.round(all["s_load"]*100)/100, "load": Math.round((all["l_load"]+all["s_load"])*100)/100,"l_line": all["l_line"],"s_line": all["s_line"],"line": all["l_line"]+all["s_line"]});
+			footer.push({"name": "合计", "l_load": Math.round(all["l_load"]*100)/100,  "s_load": Math.round(all["s_load"]*100)/100, "load": Math.round((all["l_load"]+all["s_load"])*100)/100,"l_line": all["l_line"],"s_line": all["s_line"],"line": all["l_line"]+all["s_line"]});
 			json["rows"]= rows;
 			json["footer"] = footer;
 			json["total"] = rows.length;
@@ -411,12 +429,12 @@
 			//按区域和按分拨调用的函数不同
 			
 			if(checkedlist.length > 0){
-			/*	if(queryParams.param1 == '按区域'){
+				if(params.param1 == '按区域'){
 					datatree(newdata);
 				}else{
 					datatree1(newdata);
-				};*/
-				datatree(newdata);
+				};
+				//datatree(newdata);
 			};
 			
 		}	
@@ -426,20 +444,20 @@
 		//恢复初始数据
 		function reset(){
 			$('input:checkbox').attr('checked', false);
-		/*	if(queryParams.param1 == '按区域'){
-				datatree(queryParams.data);
+			if(params.param1 == '按区域'){
+				datatree(data);
 			}else{
-				datatree1(queryParams.data);
+				datatree1(data);
 			};
-		*/
-			datatree(data)
+		
+			//datatree(data)
 		}
 		
 		</script>
 	</head>
 	<body>
 		<div id = "wrapper">
-			<div id = "title">运力统计汇总</div>
+			<div id = "title">全网车线运力统计</div>
 			<div id = 'nav'>
 				<ul>
 					<li><input type="checkbox" name="box" value="1" />周一</li>
@@ -460,9 +478,9 @@
 						<th data-options = "field: 'l_load'" width = "10%" align = "right">长线运力</th>
 						<th data-options = "field: 's_load'" width = "10%" align = "right">短线运力</th>
 						<th data-options = "field: 'load'" width = "10%" align = "right">运力总计</th>
-						<th data-options = "field: 'l_line'" width = "10%" align = "right">长线车线</th>
-						<th data-options = "field: 's_line'" width = "10%" align = "right">短线车线</th>
-						<th data-options = "field: 'line'" width = "10%" align = "right">车线总计</th>
+						<th data-options = "field: 'l_line'" width = "10%" align = "right">长线车线条数</th>
+						<th data-options = "field: 's_line'" width = "10%" align = "right">短线车线条数</th>
+						<th data-options = "field: 'line'" width = "10%" align = "right">车线条数总计</th>
 						
 					</tr>
 				</thead>

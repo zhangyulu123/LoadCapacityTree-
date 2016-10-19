@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv = "X-UA-Compatible" content = "IE = edge" charset = "UTF-8"/> 
+		<title>LoadCalculate</title>
+		
+		<!-- 2016-5-23 张煜璐 -->
+		
+		<link rel = "stylesheet" href = "../src/main/webapp/pages/css/wanma.css"/>
+		<link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/default/easyui.css"/>
+		<link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/icon.css"/> 
+		<script type = "text/javascript" src = "../src/main/webapp/tools/tssJS/tssJS.all.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.min.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.easyui.min.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/easyui-lang-zh_CN.js"></script>	
+		<script type = "text/javascript" src = "../src/main/webapp/tools/echarts/echarts-3.1.5.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/more/bi_template/echart.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/more/bi_template/common.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/pages/js/common.js"></script>
+<!-- 		<link rel="stylesheet" href="../css/wanma.css">
+		<link rel="stylesheet" href="../../../tools/easyui/themes/default/easyui.css">
+		<link rel="stylesheet" href="../../../tools/easyui/themes/icon.css">
+
+		<script src="../../../tools/tssJS/tssJS.all.js"></script>
+
+		<script src="../../../tools/easyui/jquery.min.js"></script>
+		<script src="../../../tools/easyui/jquery.easyui.min.js"></script>
+
+		<script src="../../../tools/easyui/easyui-lang-zh_CN.js"></script>
+		<script src="../js/common.js"></script>
+		<script type="text/javascript" src="../../../tools/easyui/datagrid-filter.js"></script>
+		<script src="../../../tools/echarts/echarts-all-2.1.10.js"></script>
+		<script src="../../../more/bi_template/echart.js"></script>
+		<script src="../../../more/bi_template/common.js"></script> -->
+
+		<style type = "text/css">
+		
+			body {
+				margin-top: 0px;
+			}
+			
+			#title {
+				text-align: center;
+				font-size: 24px;
+				margin-top: 20px;
+				color: #293C55;
+				letter-spacing: 8px;
+			}
+			
+			#nav {
+				height: 55px
+			}
+			
+			#nav ul {
+				width: 500px;
+				float: right;
+			}
+			
+			#nav li {
+				float: left;
+				display: block;
+				text-decoration: none;
+			}
+			#research{display:none;}
+			input[type="checkbox"] {
+				width: 20px;
+			}
+			
+			input[type="button"] {
+				width: 50px;
+				height: 25px; 
+			}
+			
+			input[type="checkbox"]:hover {
+				cursor: pointer;
+			}
+			
+			input[type="button"]:hover {
+				cursor: pointer;
+				background:#95B8E7;
+				border: none;
+			}
+		
+		</style>
+		<script type = "text/javascript">
+			var data;
+			
+			var DATA_URL = "http://10.9.45.68:8080//tss/data/json/2168";
+			//var DATA_URL = "/tss/data/json/2214";
+			var method = "POST";
+			var params = {"param1": "按区域","param2": "-1","param3":"2016-10-10" };
+			//var params2 = {"param1": "按分拨","param2": "-1" };
+			
+			
+			$(function(){
+				//globalValiable = window.parent.globalValiable;
+				//if(globalValiable && globalValiable.queryParams){
+					//params = globalValiable.queryParams;
+					//if(params.param2=='-1'){
+						//$("#title").html("全网车线运力统计");
+					//}else{
+						//$("#title").html(params.param2 + "车线运力统计");
+					//}
+					
+					if(params.param1 == '按区域'){
+						tssJS.ajax({
+						url: DATA_URL,
+						params: params,
+						method: method,
+						waiting: true,
+						ondata: function(){
+							data =  this.getResponseJSON();
+							//datatree(data);
+							ShowTable(data,-1);
+							}
+						});	
+					}else{
+						tssJS.ajax({
+						url: DATA_URL,
+						params: params,
+						method: method,
+						waiting: true,
+						ondata: function(){
+							data =  this.getResponseJSON();
+							datatree1(data);
+							}
+					});	
+					}	
+						
+			});
+			
+			function obj(id, parent_id, name, l_load, s_load, load, l_line, s_line, line){
+				this.id = id;
+				this._parentId = parent_id;
+				this.name = name;
+				this.l_load = l_load;
+				this.s_load = s_load;
+				this.load = load;
+				this.l_line = l_line;
+				this.s_line = s_line;
+				this.line = line;
+			}
+			//按区域统计， 1-7表示周几，-1表示所有
+			function ShowTable(data, week){
+				var rows = [], footer = [];
+				//全网、区域、区域内外、区域间
+				var total = {},reg = {}, in_out = {}, rou = {}, type = {};
+				var k = 1;
+				total = new obj("","","全网",0,0,0,0,0,0);
+				$.each(data, function(i, item){
+					if(item.freq_id.indexOf(week) != -1 || week == -1){
+						//初始化
+						if($.isEmptyObject(reg)){
+							reg = new obj(k,"",item.reg1,0,0,0,0,0,0);
+							if(item.reg2 == null){
+								in_out = new obj(k+1,k,"区域内",0,0,0,0,0,0);
+								type = new obj(k+2,k+1,item.truck_type,0,0,0,0,0,0);
+								k = k+3;
+							}else{
+								in_out = new obj(k+1,k,"区域外",0,0,0,0,0,0);
+								rou = new obj(k+2,k+1,item.reg1+"→"+item.reg2,0,0,0,0,0,0);
+								type = new obj(k+3,k+2,item.truck_type,0,0,0,0,0,0);
+								k = k+4;
+							}
+						}
+						total.l_load += item.l_load;
+						total.s_load += item.s_load;
+						total.load += item.l_load+item.s_load;
+						total.l_line += item.l_line;
+						total.s_line += item.s_line;
+						total.line += item.l_line+item.s_line;
+						if(reg.name != item.reg1){
+							rows.push(reg);
+							reg = new obj(k,"",item.reg1,0,0,0,0,0,0);
+							k++;
+							rows.push(in_out);
+							if(in_out.name == "区域外"){
+								rows.push(rou);
+							}
+							rows.push(type);
+							if(item.reg2 == null){
+								in_out = new obj(k,reg.id, "区域内",0,0,0,0,0,0);
+								k++;
+								type = new obj(k,in_out.id, item.truck_type,0,0,0,0,0,0)
+							}else{
+								in_out = new obj(k,reg.id, "区域外",0,0,0,0,0,0);
+								k++;
+								rou = new obj(k,in_out.id, item.reg1+"→"+item.reg2,0,0,0,0,0,0);
+								k++;
+								type = new obj(k,rou.id, item.truck_type,0,0,0,0,0,0)
+							}
+							k++;
+						}
+						reg.l_load += item.l_load;
+						reg.s_load += item.s_load;
+						reg.load += item.l_load+item.s_load;
+						reg.l_line += item.l_line;
+						reg.s_line += item.s_line;
+						reg.line += item.l_line+item.s_line;
+						if(item.reg2 == null){
+							in_out.l_load += item.l_load;
+							in_out.s_load += item.s_load;
+							in_out.load += item.l_load+item.s_load;
+							in_out.l_line += item.l_line;
+							in_out.s_line += item.s_line;
+							in_out.line += item.l_line+item.s_line;
+							if(type.name != item.truck_type){
+								rows.push(type);
+								type = new obj(k,in_out.id,item.truck_type,0,0,0,0,0,0,0);
+								k++;
+							}
+							type.l_load += item.l_load;
+							type.s_load += item.s_load;
+							type.load += item.l_load+item.s_load;
+							type.l_line += item.l_line;
+							type.s_line += item.s_line;
+							type.line += item.l_line+item.s_line;
+						}else{
+							in_out.l_load += item.l_load;
+							in_out.s_load += item.s_load;
+							in_out.load += item.l_load+item.s_load;
+							in_out.l_line += item.l_line;
+							in_out.s_line += item.s_line;	
+							in_out.line += item.l_line+item.s_line;
+							if(type.name != item.truck_type || rou.name != item.reg1+"→"+item.reg2){
+								rows.push(type);
+								type = new obj(k,rou.id,item.truck_type,0,0,0,0,0,0);
+								k++;
+							}
+							type.l_load += item.l_load;
+							type.s_load += item.s_load;
+							type.load += item.l_load+item.s_load;
+							type.l_line += item.l_line;
+							type.s_line += item.s_line;
+							type.line += item.l_line+item.s_line;
+							if(rou.name != item.reg1+"→"+item.reg2){
+								rows.push(rou);
+								rou = new obj(k,in_out.id,item.reg1+"→"+item.reg2,0,0,0,0,0,0);
+								type._parentId = rou.id;
+								k++;
+							}
+							rou.l_load += item.l_load;
+							rou.s_load += item.s_load;
+							rou.load += item.l_load+item.s_load;
+							rou.l_line += item.l_line;
+							rou.s_line += item.s_line;
+							rou.line += item.l_line+item.s_line;
+									
+						}
+					}
+				});
+				if(in_out.name == "区域外"){
+					rows.push(rou);
+				}
+				rows.push(reg);
+				rows.push(in_out);
+				footer.push(total);
+				return {"total":rows.length, "rows":rows, "footer":footer};
+			}
+			
+			
+			//按区域统计
+			function  datatree(data){
+				var json = {}, rows = [], footer = [];
+				var reglist = [], routelist = [], typelist = [];
+				var regid = {}, typeid = {}, routeid = {} ;//包含名称和id
+				var s = 1, t = 1, k = 1, route;
+				var area_in = {}, area_out = {}, route_out = {}, reg_a = {}, all = {};
+				all["l_load"] = 0, all["s_load"] = 0, all["l_line"] = 0, all["s_line"] = 0;
+				//var area_in_c = {}, area_in_l = {}, area_out_c = {}, area_out_l = {};
+				//var route_out_c = {}, route_out_l = {},reg_c= {}, reg_l = {}, all_c = 0, all_l = 0;
+				
+				//id初始化
+				for(var i = 0; i < data.length; i++){
+					if(!typelist.contains(data[i]["truck_type"])){
+							typelist.push(data[i]["truck_type"]);
+							typeid[data[i]["truck_type"]] = t;
+							t++
+						};
+					if(!reglist.contains(data[i]["reg1"])){
+						reglist.push(data[i]["reg1"]);
+						regid[data[i]["reg1"]] = s;
+						var tempobj1 = {}, tempobj2 = {}, tempobj3 = {};
+						tempobj1["l_load"] = 0;
+						tempobj1["s_load"] = 0;
+						tempobj1["l_line"] = 0;
+						tempobj1["s_line"] = 0;
+						tempobj2["l_load"] = 0;
+						tempobj2["s_load"] = 0;
+						tempobj2["l_line"] = 0;
+						tempobj2["s_line"] = 0;
+						tempobj3["l_load"] = 0;
+						tempobj3["s_load"] = 0;
+						tempobj3["l_line"] = 0;
+						tempobj3["s_line"] = 0;
+						area_in[data[i]["reg1"]] = tempobj1;
+						area_out[data[i]["reg1"]] = tempobj2;
+						reg_a[data[i]["reg1"]] = tempobj3;
+						s++;
+					};
+					if(data[i]["reg2"] != null){
+						route = data[i]["reg1"] + "→" + data[i]["reg2"];
+						if(!routelist.contains(route)){
+							routelist.push(route);
+							routeid[route] = k;
+							var tempobj4 = {};
+							tempobj4["l_load"] = 0;
+							tempobj4["s_load"] = 0;
+							tempobj4["l_line"] = 0;
+							tempobj4["s_line"] = 0;
+							route_out[route] = tempobj4;
+							k++;
+						};
+					};
+				}
+				
+				//最后子节点赋值，按车型，并计算上一层值
+				for(var i = 0; i < data.length; i++){
+					route = data[i]["reg1"] + "→" + data[i]["reg2"];
+					var reg = data[i]["reg1"], type = data[i]["truck_type"], l_load = data[i]["l_load"], s_load = data[i]["s_load"], l_line = data[i]["l_line"], s_line = data[i]["s_line"];
+					if(data[i]["reg2"] == null){
+						if(rows.length == 0){
+							rows.push({"id":regid[reg]*100+10+typeid[type], "_parentId":regid[reg]*10+1, "name":type, "l_load":l_load, "s_load":s_load, "load": l_load+s_load, "l_line":l_line, "s_line":s_line,"line":l_line+s_line});
+						}else{
+							for(var j = 0; j < rows.length; j++){
+								if(parseInt(rows[j]["id"]) === regid[reg]*100+10+typeid[type]){
+									rows[j]["l_load"] += l_load;
+									rows[j]["s_load"] += s_load;
+									rows[j]["l_line"] += l_line;
+									rows[j]["s_line"] += s_line;
+									break;
+								}else{
+									continue;	
+								};	
+							}
+							if(j == rows.length){
+								rows.push({"id":regid[reg]*100+10+typeid[type], "_parentId":regid[reg]*10+1, "name":type, "l_load":l_load, "s_load":s_load, "load": l_load+s_load, "l_line":l_line, "s_line":s_line,"line":l_line+s_line});
+							}
+						};
+						area_in[reg]["l_load"] += l_load;
+						area_in[reg]["s_load"] += s_load;
+						area_in[reg]["l_line"] += l_line;
+						area_in[reg]["s_line"] += s_line;
+					}else{
+						if(rows.length == 0){
+							rows.push({"id":regid[reg]*10000+2000+routeid[route]*10+typeid[type], "_parentId":regid[reg]*1000+200+routeid[route], "name":type,"l_load":l_load, "s_load":s_load, "load": l_load+s_load, "l_line":l_line, "s_line":s_line,"line":l_line+s_line });
+						}else{
+							for(var j = 0; j < rows.length; j++){
+								if(parseInt(rows[j]["id"]) === regid[reg]*10000+2000+routeid[route]*10+typeid[type]){
+									rows[j]["l_load"] += l_load;
+									rows[j]["s_load"] += s_load;
+									rows[j]["l_line"] += l_line;
+									rows[j]["s_line"] += s_line;
+									break;
+								}else{
+									continue;
+								};
+								
+							}
+							if(j == rows.length){
+								rows.push({"id":regid[reg]*10000+2000+routeid[route]*10+typeid[type], "_parentId":regid[reg]*1000+200+routeid[route], "name":type,"l_load":l_load, "s_load":s_load, "load": l_load+s_load, "l_line":l_line, "s_line":s_line,"line":l_line+s_line });
+							}
+						};
+						route_out[route]["l_load"] += l_load;
+						route_out[route]["s_load"] += s_load;
+						route_out[route]["l_line"] += l_line;
+						route_out[route]["s_line"] += s_line;
+					};
+					
+				}
+				//区域外出发区域到目的区域
+				for(var key in route_out){
+					var reg = key.substring(0,4);
+					rows.push({"id":regid[reg]*1000+200+routeid[key], "_parentId":regid[reg]*100+20, "name":key, "l_load":Math.round(route_out[key]["l_load"]*100)/100, "s_load":Math.round(route_out[key]["s_load"]*100)/100,"load":Math.round((route_out[key]["l_load"]+route_out[key]["s_load"])*100)/100,"l_line":route_out[key]["l_line"], "s_line":route_out[key]["s_line"],"line":route_out[key]["l_line"]+route_out[key]["s_line"],"state":"closed"});
+					area_out[reg]["l_load"] += route_out[key]["l_load"];
+					area_out[reg]["s_load"] += route_out[key]["s_load"];
+					area_out[reg]["l_line"] += route_out[key]["l_line"];
+					area_out[reg]["s_line"] += route_out[key]["s_line"];
+				}
+				//区域内
+				for(var key in area_in){
+					rows.push({"id":regid[key]*10+1, "_parentId":regid[key], "name":"区域内", "l_load":Math.round(area_in[key]["l_load"]*100)/100, "s_load":Math.round(area_in[key]["s_load"]*100)/100,"load":Math.round((area_in[key]["l_load"]+area_in[key]["s_load"])*100)/100,"l_line":area_in[key]["l_line"],"s_line":area_in[key]["s_line"], "line":area_in[key]["l_line"]+area_in[key]["s_line"],"state":"closed"});
+					reg_a[key]["l_load"] += area_in[key]["l_load"];
+					reg_a[key]["s_load"] += area_in[key]["s_load"];
+					reg_a[key]["l_line"] += area_in[key]["l_line"];	
+					reg_a[key]["s_line"] += area_in[key]["s_line"];
+					};
+					
+				//区域外
+				for(var key in area_out){
+					rows.push({"id":regid[key]*100+20, "_parentId":regid[key], "name":"区域外", "l_load":Math.round(area_out[key]["l_load"]*100)/100, "s_load":Math.round(area_out[key]["s_load"]*100)/100,"load":Math.round((area_out[key]["l_load"]+area_out[key]["s_load"])*100)/100,"l_line":area_out[key]["l_line"],"s_line":area_out[key]["s_line"], "line":area_out[key]["l_line"]+area_out[key]["s_line"],"state":"closed"});
+					reg_a[key]["l_load"] += area_out[key]["l_load"];
+					reg_a[key]["s_load"] += area_out[key]["s_load"];
+					reg_a[key]["l_line"] += area_out[key]["l_line"];	
+					reg_a[key]["s_line"] += area_out[key]["s_line"];
+					};
+				//第一层，每个区域累加
+				for(var key in reg_a){
+					rows.push({"id":regid[key],"name":key, "l_load":Math.round(reg_a[key]["l_load"]*100)/100, "s_load":Math.round(reg_a[key]["s_load"]*100)/100,"load":Math.round((reg_a[key]["l_load"]+reg_a[key]["l_load"])*100)/100,"l_line":reg_a[key]["l_line"],"s_line":reg_a[key]["s_line"], "line":reg_a[key]["l_line"]+reg_a[key]["s_line"],"state":"closed"});
+					all["l_load"] += reg_a[key]["l_load"];
+					all["s_load"] += reg_a[key]["s_load"];
+					all["l_line"] += reg_a[key]["l_line"];
+					all["s_line"] += reg_a[key]["s_line"];
+				};
+					
+				footer.push({"name": "合计", "l_load": Math.round(all["l_load"]*100)/100,"s_load": Math.round(all["s_load"]*100)/100,"load": Math.round((all["l_load"]+all["s_load"])*100)/100, "l_line": all["l_line"],"s_line": all["s_line"],"line": all["l_line"]+ all["s_line"]});
+				json["rows"]= rows;
+				json["footer"] = footer;
+				json["total"] = rows.length;
+				console.log(json);
+				
+			$("#tree").treegrid({
+				idField:'id',
+				treeField:'name',
+				height: 500,
+				showFooter: true,
+				data: json
+			})
+			
+			
+				
+		};
+		
+		
+		//按分拨统计
+		function datatree1(data1){
+			var json = {}, rows = [], footer = [];
+			var reglist = [], centerlist = [], typelist = [];
+			var regid = {}, centerid = {}, typeid = {};
+			var k = 1, s = 1, t = 1;
+			var center_a = {}, reg_a = {}, all = {};
+			var center_to_reg = {};//分拨和区域的从属关系
+			all["l_load"] = 0, all["s_load"] = 0, all["l_line"] = 0, all["s_line"] = 0;
+			
+			
+			//id初始化
+			$.each(data1, function(i, item){
+				var tempobj1 = {}, tempobj2 = {};
+				tempobj1["l_load"] = 0;
+				tempobj1["s_load"] = 0;
+				tempobj1["l_line"] = 0;
+				tempobj1["s_line"] = 0;
+				tempobj2["l_load"] = 0;
+				tempobj2["s_load"] = 0;
+				tempobj2["l_line"] = 0;
+				tempobj2["s_line"] = 0;
+				
+				if(!reglist.contains(item.reg)){
+					reglist.push(item.reg);
+					regid[item.reg] = k;
+					reg_a[item.reg] = tempobj1;
+					center_to_reg[item.reg] = [];
+					k++;
+				};
+				if(!centerlist.contains(item.center)){
+					centerlist.push(item.center);
+					centerid[item.center] = s;
+					center_a[item.center] = tempobj2;
+					s++;
+				};
+				if(!typelist.contains(item.truck_type)){
+					typelist.push(item.truck_type);
+					typeid[item.truck_type] = t;
+					t++;
+				};
+				
+			});
+			
+			
+			$.each(data1, function(i, item){
+				var reg = item.reg, center = item.center, type = item.truck_type,l_load = item.l_load, s_load = item.s_load, l_line = item.l_line, s_line = item.s_line;
+				
+				if(rows.length == 0){
+					rows.push({"id":regid[reg]*10000+centerid[center]*10+typeid[type], "_parentId":regid[reg]*1000+centerid[center], "name":type, "l_load": Math.round(l_load*100)/100, "s_load": Math.round(s_load*100)/100, "load": Math.round((l_load+s_load)*100)/100, "l_line":l_line,"s_line":s_line,"line":l_line+s_line });
+				}else{
+					for(var j = 0; j < rows.length; j++){
+						if(parseInt(rows[j]["id"]) === regid[reg]*10000+centerid[center]*10+typeid[type]){
+							rows[j]["l_load"] += l_load;
+							rows[j]["s_load"] += s_load;
+							rows[j]["l_line"] += l_line;
+							rows[j]["s_line"] += s_line;
+							break;
+						}else{
+							continue;	
+						};	
+					}
+					if(j == rows.length){
+						rows.push({"id":regid[reg]*10000+centerid[center]*10+typeid[type], "_parentId":regid[reg]*1000+centerid[center], "name":type, "l_load": Math.round(l_load*100)/100, "s_load": Math.round(s_load*100)/100, "load": Math.round((l_load+s_load)*100)/100, "l_line":l_line,"s_line":s_line,"line":l_line+s_line });
+					}
+				};
+				
+				center_a[center]["l_load"] += l_load;
+				center_a[center]["s_load"] += s_load;
+				center_a[center]["l_line"] += l_line;
+				center_a[center]["s_line"] += s_line;
+				if(!center_to_reg[reg].contains(center)){
+					center_to_reg[reg].push(center);
+				};
+			});
+			
+			for(var key in center_to_reg){
+				for(var i=0; i< center_to_reg[key].length; i++){
+					var center = center_to_reg[key][i];
+					rows.push({"id":regid[key]*1000+centerid[center], "_parentId":regid[key], "name":center, "l_load": Math.round(center_a[center]["l_load"]*100)/100, "s_load": Math.round(center_a[center]["s_load"]*100)/100,"load": Math.round((center_a[center]["l_load"]+center_a[center]["s_load"])*100)/100,"l_line":center_a[center]["l_line"],"s_line":center_a[center]["s_line"],"line":center_a[center]["l_line"]+center_a[center]["s_line"], "state": "closed"});
+					reg_a[key]["l_load"] += center_a[center]["l_load"];
+					reg_a[key]["s_load"] += center_a[center]["s_load"];
+					reg_a[key]["l_line"] += center_a[center]["l_line"];
+					reg_a[key]["s_line"] += center_a[center]["s_line"];
+				};
+				rows.push({"id":regid[key], "name":key, "l_load": Math.round(reg_a[key]["l_load"]*100)/100, "s_load": Math.round(reg_a[key]["s_load"]*100)/100,"load": Math.round((reg_a[key]["l_load"]+reg_a[key]["s_load"])*100)/100,"l_line":reg_a[key]["l_line"],"s_line":reg_a[key]["s_line"], "line":reg_a[key]["l_line"]+reg_a[key]["s_line"],"state": "closed"});
+				all["l_load"] += reg_a[key]["l_load"];
+				all["s_load"] += reg_a[key]["s_load"];
+				all["l_line"] += reg_a[key]["l_line"];
+				all["s_line"] += reg_a[key]["s_line"];
+			};
+			
+			footer.push({"name": "合计", "l_load": Math.round(all["l_load"]*100)/100,  "s_load": Math.round(all["s_load"]*100)/100, "load": Math.round((all["l_load"]+all["s_load"])*100)/100,"l_line": all["l_line"],"s_line": all["s_line"],"line": all["l_line"]+all["s_line"]});
+			json["rows"]= rows;
+			json["footer"] = footer;
+			json["total"] = rows.length;
+			
+			$("#tree").treegrid({
+				idField:'id',
+				treeField:'name',	
+				height:500,
+				showFooter: true,
+				data: json
+			});	
+			
+		};
+		
+		//复选框选中时重新筛选数据
+		function filter(){
+			//var data = queryParams.data
+			var str=document.getElementsByName("box");
+			var checkedlist = [], newdata = [], itemlist = [];
+			for(var i = 0; i < str.length; i++){ //确定勾选的值
+				if(str[i].checked){
+					checkedlist.push(str[i].value);
+				}else{
+					continue;
+				}
+			};
+			
+			if(checkedlist.length > 1){
+				return false;
+			};
+			
+			$.each(data, function(i, item){
+				var fre = item.freq_id;
+				for(var j = 0; j < checkedlist.length; j++){
+					if(fre.indexOf(checkedlist[j]) != '-1'){
+						if(!itemlist.contains(item)){
+							itemlist.push(item);
+							newdata.push(item);
+							break;
+						}else{
+							continue;
+						}
+					}
+				};
+			});
+			//按区域和按分拨调用的函数不同
+			
+			if(checkedlist.length > 0){
+				if(params.param1 == '按区域'){
+					datatree(newdata);
+				}else{
+					datatree1(newdata);
+				};
+				//datatree(newdata);
+			};
+			
+		}	
+		
+		
+		
+		//恢复初始数据
+		function reset(){
+			$('input:checkbox').attr('checked', false);
+			if(params.param1 == '按区域'){
+				datatree(data);
+			}else{
+				datatree1(data);
+			};
+		
+			//datatree(data)
+		}
+		
+		
+		</script>
+	</head>
+	<body>
+		<div id = "wrapper">
+			<div id = "title">全网车线运力统计</div>
+			<div id = 'nav'>
+				<ul>
+					<li><input type="checkbox" name="box" value="1" />周一</li>
+					<li><input type="checkbox" name="box" value="2" />周二</li>
+					<li><input type="checkbox" name="box" value="3" />周三</li>
+					<li><input type="checkbox" name="box" value="4" />周四</li>
+					<li><input type="checkbox" name="box" value="5" />周五</li>
+					<li><input type="checkbox" name="box" value="6" />周六</li>
+					<li><input type="checkbox" name="box" value="7" />周日&nbsp;&nbsp;&nbsp;&nbsp;</li>
+					<li><input type="button" onclick="filter()" value="确定" />&nbsp;&nbsp;</li>
+					<li><input type="button" onclick="reset()" value="刷新" /></li>
+				</ul>
+			</div>
+			<table id = "tree">
+				<thead>
+					<tr>
+						<th data-options = "field: 'name'" width = "20%" align = "left">区域名称</th>
+						<th data-options = "field: 'l_load'" width = "10%" align = "right">长线运力</th>
+						<th data-options = "field: 's_load'" width = "10%" align = "right">短线运力</th>
+						<th data-options = "field: 'load'" width = "10%" align = "right">运力总计</th>
+						<th data-options = "field: 'l_line'" width = "10%" align = "right">长线车线条数</th>
+						<th data-options = "field: 's_line'" width = "10%" align = "right">短线车线条数</th>
+						<th data-options = "field: 'line'" width = "10%" align = "right">车线条数总计</th>
+						
+					</tr>
+				</thead>
+			</table>
+		</div>
+	</body>
+</html>
