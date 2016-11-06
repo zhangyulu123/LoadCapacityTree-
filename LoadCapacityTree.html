@@ -1,0 +1,444 @@
+﻿<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv = "X-UA-Compatible" content = "IE = edge" charset = "UTF-8"/> 
+		<title>LoadCalculate</title>
+		
+		<!-- 2016-5-23 张煜璐-->
+		
+		<link rel = "stylesheet" href = "../src/main/webapp/pages/css/wanma.css"/>
+		<link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/default/easyui.css"/>
+		<link rel = "stylesheet" href = "../src/main/webapp/tools/easyui/themes/icon.css"/>
+		
+		<script type = "text/javascript" src = "../src/main/webapp/tools/tssJS/tssJS.all.js"></script>
+		
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.min.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/jquery.easyui.min.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/tools/easyui/easyui-lang-zh_CN.js"></script>
+		
+		<script type = "text/javascript" src = "../src/main/webapp/tools/echarts/echarts-all-2.1.10.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/more/bi_template/echart.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/more/bi_template/common.js"></script>
+		<script type = "text/javascript" src = "../src/main/webapp/pages/js/common.js"></script>
+
+		<script type = "text/javascript">
+			// data 传入数据, func 处理后json, t 列名(表头)
+			var data,func,t;
+			
+			var DATA_URL_1 = "/tss/data/json/2214", //跨区运力
+				DATA_URL_2 = "/tss/data/json/2315", //分拨运力
+				DATA_URL_3 = "/tss/data/json/2245", //跨区车线
+				DATA_URL_4 = "/tss/data/json/2310", //分拨车线
+				DATA_URL_5 = "/tss/data/json/2320"; //月度车线统计
+			
+			var method = "POST";
+			var params = {"param1":"2016-10-20"};
+			var weeklist = [1,2,3,4,5,6,7], weektext = ["周一","周二","周三","周四","周五","周六","周日"];
+
+			$(function(){
+				//globalValiable = window.parent.globalValiable;
+				//if(globalValiable && globalValiable.queryParams){
+					//params = globalValiable.queryParams;
+				//}
+				tssJS.ajax({
+				url: DATA_URL_1,
+				params: params,
+				method: method,
+				waiting: true,
+				ondata: function(){
+					data =  this.getResponseJSON();
+					loadstr = export_data(ShowArea(data,"LoadTree",weeklist));
+					// title
+					$("#wrapper").panel({"title":params.param1.replace(/-/g, "")+"全网运力统计"})
+					}
+				});	
+				
+				tssJS.ajax({
+				url: DATA_URL_3,
+				params: params,
+				method: method,
+				waiting: true,
+				ondata: function(){
+					data =  this.getResponseJSON();
+					linestr = export_data(ShowArea(data,"LineTree",weeklist));
+					// title
+					$("#wrapper").panel({"title":params.param1.replace(/-/g, "")+"全网车线数量统计"})
+					}
+				});	
+				
+				
+				
+				//多选复选框
+				var combolist = [];
+				for(var i = 0; i < weeklist.length; i++){
+					combolist.push({"id": weeklist[i], "text": weektext[i]});
+				};
+				
+				$("#weekcombo").combobox({
+					valueField: 'id',
+					textField: 'text',
+					data: combolist,
+					multiple: true
+				});
+				
+				$("#save").click(function(){
+					$(this)[0].download = params.param1.replace(/-/g,"")+"车线运力统计("+(($("#weekcombo").combobox("getText") == "")?"一周":$("#weekcombo").combobox("getText"))+").csv";
+					this.href = "data:text/csv;charset=utf-8,\ufeff" + encodeURIComponent(temp);
+				});
+				
+					
+			});
+			
+			//对象类
+			function obj(id, parent_id, name, col1, col2, col3, state){
+				this.id = id;
+				this._parentId = parent_id;
+				this.name = name;
+				this.col1 = col1;
+				this.col2 = col2;
+				this.col3 = col3;
+				this.state = state
+			}
+			
+			// 对象数值累计
+			function obj_acc(objname, keylist, valuelist){
+				var c;
+				for(var i = 0; i < keylist.length; i++){
+					c = keylist[i];
+					objname[c] += valuelist[i];
+				}
+				return objname;
+			}
+			
+			//按区域
+			function ShowArea(data,tableid,week){
+				var rows = [], footer = [];
+				var total = {},reg = {}, area = {}, rou = {}, type = {};
+				total = new obj("","","合计",0,0,0,"open");
+				var k = 1;
+				$.each(data, function(i, item){
+					for(var j = 0; j < week.length; j++){
+						if(item.freq_id.indexOf(week[j]) != -1){
+							break;
+						}
+					};
+					if(j < week.length){
+						//初始化
+						if($.isEmptyObject(reg)){
+							reg = new obj(k,"",item.reg1,0,0,0,"closed");
+							k++;
+							area = new obj(k,reg.id, item.area,0,0,0,"closed");
+							k++;
+							if(item.area == "区域外"){
+								rou = new obj(k,area.id,item.reg1+"→"+item.reg2,0,0,0,"closed");
+								k++;
+								type = new obj(k,rou.id,item.truck_type, 0,0,0,"open");
+								k++;
+							}else{
+								type = new obj(k,area.id, item.truck_type,0,0,0,"open");
+								k++;
+							}
+						}
+						obj_acc(total,["col1", "col2","col3"],[item.l_load,item.s_load,item.l_load+item.s_load]);
+						if(reg.name != item.reg1 || area.name != item.area){
+							if(reg.name != item.reg1){
+								rows.push(to_decimal(reg));
+								reg = new obj(k,"",item.reg1,0,0,0,"closed");
+								k++;
+							}
+							rows.push(to_decimal(area));
+							if(area.name == "区域外"){
+								rows.push(to_decimal(rou));
+							}
+							rows.push(to_decimal(type));
+							// reset object
+							area = new obj(k,reg.id, item.area,0,0,0,"closed");
+							k++;
+							if(item.area == "区域内"){
+								type = new obj(k,area.id, item.truck_type,0,0,0,"open");
+							}else{
+								rou = new obj(k,area.id, item.reg1+"→"+item.reg2,0,0,0,"closed");
+								k++;
+								type = new obj(k,rou.id, item.truck_type,0,0,0,"open");
+							}
+							k++;
+						}
+						obj_acc(reg,["col1", "col2","col3"],[item.l_load,item.s_load,item.l_load+item.s_load]);
+						if(item.area == "区域内"){
+							obj_acc(area,["col1", "col2","col3"],[item.l_load,item.s_load,item.l_load+item.s_load]);
+							if(type.name != item.truck_type){
+								rows.push(to_decimal(type));
+								type = new obj(k,area.id,item.truck_type,0,0,0,"open");
+								k++;
+							}
+							obj_acc(type,["col1", "col2","col3"],[item.l_load,item.s_load,item.l_load+item.s_load,item.l_line,item.s_line,item.l_line+item.s_line]);
+						}else{
+							obj_acc(area,["col1", "col2","col3"],[item.l_load,item.s_load,item.l_load+item.s_load]);
+							if(type.name != item.truck_type || rou.name != item.reg1+"→"+item.reg2){
+								if(rou.name != item.reg1+"→"+item.reg2){
+									rows.push(to_decimal(rou));
+									rou = new obj(k,area.id,item.reg1+"→"+item.reg2,0,0,0,"closed");
+									k++;
+								}
+								rows.push(to_decimal(type));
+								type = new obj(k,rou.id,item.truck_type,0,0,0,"open");
+								k++;
+							}
+							obj_acc(rou,["col1", "col2","col3"],[item.l_load,item.s_load,item.l_load+item.s_load]);	
+							obj_acc(type,["col1", "col2","col3"],[item.l_load,item.s_load,item.l_load+item.s_load]);
+							}
+						}
+				});
+				
+				rows.push(to_decimal(reg));
+				rows.push(to_decimal(area));
+				if(area.name == "区域外"){
+					rows.push(to_decimal(rou));
+				}
+				rows = rows.sort(compare("id"));
+				footer.push(to_decimal(total));
+				
+				var json = {};
+				json.total = rows.length;
+				json.rows = rows;
+				json.footer = footer;
+				
+				var title = cols(["长线运力", "短线运力", "运力总计"]);
+				var tableobj = eval("$(\"#"+tableid+"\")");
+				tableobj.treegrid({
+					idField: "id",
+					textField: "name",
+					columns: title,
+					showFooter: true,
+					data: json
+				})
+				
+				return [title, rows, footer];
+			}
+			
+			function ShowCenter(data, tableid, week){
+				var rows = [],footer = [];
+				// layers
+				var total = {}, reg = {},center= {}, type = {};
+				total = new obj("","","合计",0,0,0,"open");
+				var k = 1;
+				$.each(data,function(i,item){
+					for(var ii = 0; ii < week.length; ii++){
+						if(item.freq_id.indexOf(week[ii]) != -1){
+							break;
+						}
+					};
+					if(ii < week.length){
+						// initialize
+						if($.isEmptyObject(reg)){
+							reg = new obj(k,"",item.reg,0,0,0,"closed");
+							k++;
+							center = new obj(k,reg.id,item.center,0,0,0,"closed");
+							k++;
+							type = new obj(k,center.id,item.truck_type,0,0,0,"open");
+							k++;
+						}
+						obj_acc(total,["col1", "col2","col3"],[item.l_line,item.s_line,item.l_line+item.s_line]);
+						if(reg.name != item.reg || center.name != item.center || type.name != item.truck_type){
+							if(reg.name != item.reg || center.name != item.center){
+								if(reg.name != item.reg){
+									rows.push(to_decimal(reg));
+									reg = new obj(k,"",item.reg,0,0,0,"closed");
+									k++;
+								}
+								rows.push(to_decimal(center));
+								center = new obj(k,reg.id,item.center,0,0,0,"closed");
+								k++;
+							}
+							rows.push(to_decimal(type));
+							type = new obj(k,center.id,item.truck_type,0,0,0,"open");
+							k++;
+						}
+						obj_acc(reg,["col1", "col2","col3"],[item.l_line,item.s_line,item.l_line+item.s_line]);
+						obj_acc(center,["col1", "col2","col3"],[item.l_line,item.s_line,item.l_line+item.s_line]);
+						obj_acc(type,["col1", "col2","col3"],[item.l_line,item.s_line,item.l_line+item.s_line]);
+						}
+					})
+					//最后一行
+					rows.push(to_decimal(reg));
+					rows.push(to_decimal(center));
+					rows.push(to_decimal(type));
+					rows = rows.sort(compare("id"));
+					footer.push(total);
+					
+					var json = {};
+					json.total = rows.length;
+					json.rows = rows;
+					json.footer = footer;
+					
+					var title = cols(["长线车线条数", "短线车线条数", "车线条数统计"]);
+					var tableobj = eval("$(\"#"+tableid+"\")");
+					tableobj.treegrid({
+						idField: "id",
+						textField: "name",
+						columns: title,
+						showFooter: true,
+						data: json
+					})
+					
+					return [title, rows, footer];
+			}
+			
+			//row排序，方便导出
+			function compare(propertyName) { 
+				return function (object1, object2) { 
+						var value1 = object1[propertyName]; 
+						var value2 = object2[propertyName]; 
+						if (value2 < value1){
+							return 1; 
+						}else if (value2 > value1){
+							return -1;   
+						}else {
+							return 0; 
+						}
+					}
+			}	
+			
+			//列名(表头)
+			function cols(titlelist){
+				var list = [];
+				var fieldlist = ["col1", "col2","col3"];
+				//var titlelist = ["长线运力","短线运力","运力总计","长线车线条数","短线车线条数","车线条数总计"];
+				list.push({title: "区域名称", field:"name", width: "20%", align: "left"});
+				for(var i = 0; i < fieldlist.length; i++){
+					list.push({title: titlelist[i], field: fieldlist[i], width: "10%", align: "right"});
+				}
+				return list;
+			}
+			
+			
+			//导出
+			function export_data([head, body, foot]){
+				var str ="";
+				for(var i = 0; i < head.length; i++){
+					for(var key in head[i]){
+						if(key == "title"){
+							str += head[i][key] + ",";
+							break;
+						}
+					}
+				}
+				str = str.substr(0,str.length-1)+"\n";
+				var objcom = body.concat(foot);
+				for(var i = 0; i < objcom.length; i++){
+					for(var key in objcom[i]){
+						if($.inArray(key,["name", "col1", "col2","col3"]) != -1){
+							str += objcom[i][key] + ",";
+						}
+					}
+					str = str.substr(0,str.length-1)+"\n";
+				}
+				return str;
+			}
+			
+		//按照星期查询
+		function filter(comboid){
+			var selobj = eval("$(\"#"+comboid+"\")");
+			var comb = selobj.combobox('getValues');
+			if(comb.length > 0){
+				var checked = $.map(comb,function(val){
+					return parseInt(val);
+				})
+				if(params.param1 == "按区域"){
+					func = ShowArea(data, checked);
+				}else{
+					func = ShowCenter(data, checked);
+				};
+			}else{
+				return false;
+			}
+			$('#tree').treegrid('loadData', func)
+		}	
+		
+		//多次累加后精度丢失
+		function to_decimal(obj){
+			var reg = new RegExp("^[0-9.]+$");
+			for(var key in obj){
+				if(reg.test(obj[key])){
+					obj[key] = Math.round(obj[key]*100)/100;
+				}
+			}
+			return obj
+		}
+		
+		function ShowGraph(data){
+			var monlist = [], s_line = [], l_line = [];
+			$.each(data, function(i, item){
+				if($.inArray(item.mon, monlist) != -1){
+					monlist.push(item.mon);
+				}
+				if(item.cd == "长线"){
+					s_line.push(item.cnt);
+				}else{
+					l_line.push(item.cnt);
+				}
+			});
+			var line = s_line.map(function(v,i){
+				return v + l_line[i];
+			});
+			
+			var myChart = echarts.init(document.getElementById("graph"));
+			var option = {
+				xAxis: [{
+					type: "category",
+					data: monlist
+				}],
+				yAxis: [{
+					type: "value"
+				}],
+				series: [{
+					name: "短线条数",
+					type: "bar",
+					stack: "车线条数总计",
+					data: s_line
+				},{
+					name: "长线条数",
+					type: "bar",
+					stack: "车线条数总计",
+					data: l_line
+				},{
+					name: "车线条数总计",
+					type："line",
+					data: line
+				}]
+			}
+			myChart.setOption(option); 
+		}
+		
+		</script>
+	</head>
+	<body>
+		<div class = "easyui-layout" fit = "true">
+			<div data-options = "region: 'east'" style = "width: 50%">
+				<div class = "easyui-layout" fit = "true">
+					<div data-options = "region: 'north'; split:true" style = "height: 50%">
+						<input type = "radio">按区域内外</input>
+						<input type = "radio">按所属分拨</input>
+						<span>星期</span>
+						<input class = "easyui-combobox"/>
+						<a class = "easyui-linkbutton search" data-options="iconCls:'icon-search'">查询</a>
+						<a href="#" class = "easyui-linkbutton save" data-options="iconCls:'icon-save'">导出</a>
+						<table></table>
+					</div>
+					<div data-options = "region: 'center'; split:true" tyle = "height: 50%">
+						<input type = "radio">按区域内外</input>
+						<input type = "radio">按所属分拨</input>
+						<span>星期</span>
+						<input class = "easyui-combobox"/>
+						<a class = "easyui-linkbutton search" data-options="iconCls:'icon-search'">查询</a>
+						<a href="#" class = "easyui-linkbutton save" data-options="iconCls:'icon-save'">导出</a>
+						<table></table>
+					</div>
+				</div>
+			</div>
+			<div data-options = "region:'center'" style = "width: 50%">
+				<div></div>
+			</div>
+		</div>
+	</body>
+</html>
